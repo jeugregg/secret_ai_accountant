@@ -2,7 +2,8 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import Tesseract from 'tesseract.js'
 
 // Set the worker source for pdfjs-dist
-GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.js'
+GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'
+
 
 interface OCRService {
   extractTextFromPDF: (pdfFile: File) => Promise<string>
