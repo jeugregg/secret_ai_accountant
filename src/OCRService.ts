@@ -1,9 +1,9 @@
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
-import Tesseract from 'tesseract.js'
-
+import { ocr } from '/src/llama-ocr-buffer'
+// Remove the import of 'fs' and 'path' modules
+//import { Buffer } from 'buffer'
 // Set the worker source for pdfjs-dist
 GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'
-
 
 interface OCRService {
   extractTextFromPDF: (pdfFile: File) => Promise<string>
@@ -35,9 +35,19 @@ const ocrService: OCRService = {
             }
             await page.render(renderContext).promise
 
-            const image = canvas.toDataURL('image/png')
-            const tesseractResult = await Tesseract.recognize(image, 'eng', { logger: m => console.log(m) })
-            fullText += tesseractResult.data.text + '\n'
+            const image = canvas.toDataURL('image/jpeg')
+            //const buffer = Buffer.from(image.split(',')[1], 'base64')
+            //const blob = new Blob([buffer], { type: 'image/png' })
+            //const tempFilePath = URL.createObjectURL(blob)
+
+            const markdown = await ocr({
+              fileBuffer: image,
+              model: 'Llama-3.2-11B-Vision',
+              apiKey: import.meta.env.VITE_APP_TOGETHER_API_KEY,
+            })
+            fullText += markdown + '\n'
+
+            //URL.revokeObjectURL(tempFilePath) // Clean up the temporary file
           }
 
           resolve(fullText)
@@ -51,3 +61,5 @@ const ocrService: OCRService = {
 }
 
 export default ocrService
+
+
