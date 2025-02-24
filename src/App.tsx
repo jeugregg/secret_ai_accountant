@@ -22,14 +22,14 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">PDF OCR Extractor</h1>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full">
+        <h1 className="text-2xl font-bold mb-6 text-center">PDF OCR Extractor</h1>
         <FileUpload onFileChange={handleFileChange} />
         {uploadedFile && (
           <button
             onClick={extractText}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mt-4"
           >
             Extract Text
           </button>
