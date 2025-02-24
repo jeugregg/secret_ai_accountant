@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [pdfText, setPdfText] = useState<string>('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null)
+  const [credibilityScore, setCredibilityScore] = useState<number | null>(null)
 
   const handleFileChange = (file: File) => {
     setUploadedFile(file)
@@ -59,6 +60,32 @@ const App: React.FC = () => {
     }
   }
 
+  const callCredibilityApi = async () => {
+    if (!pdfText || !apiResponse) return
+    try {
+      const response = await fetch(apiCredibilityUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoice: pdfText,
+          accounting_row: apiResponse
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+
+      const result = await response.json()
+      setCredibilityScore(result.credibility)
+      console.log('Credibility API response:', result)
+    } catch (error) {
+      console.error('Error calling credibility API:', error)
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof ApiResponse) => {
     if (apiResponse) {
       setApiResponse({
@@ -89,76 +116,98 @@ const App: React.FC = () => {
           Call API
         </button>
         {apiResponse && (
+          <>
+            <table className="mt-4 w-full border-collapse border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2">Invoice Number</th>
+                  <th className="border border-gray-300 px-4 py-2">Date</th>
+                  <th className="border border-gray-300 px-4 py-2">Client Name</th>
+                  <th className="border border-gray-300 px-4 py-2">Type</th>
+                  <th className="border border-gray-300 px-4 py-2">Total Amount</th>
+                  <th className="border border-gray-300 px-4 py-2">Tax Amount</th>
+                  <th className="border border-gray-300 px-4 py-2">Currency</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.invoice_number}
+                      onChange={(e) => handleInputChange(e, 'invoice_number')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.date}
+                      onChange={(e) => handleInputChange(e, 'date')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.client_name}
+                      onChange={(e) => handleInputChange(e, 'client_name')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.type}
+                      onChange={(e) => handleInputChange(e, 'type')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.total_amount}
+                      onChange={(e) => handleInputChange(e, 'total_amount')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.tax_amount}
+                      onChange={(e) => handleInputChange(e, 'tax_amount')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    <input
+                      type="text"
+                      value={apiResponse.currency}
+                      onChange={(e) => handleInputChange(e, 'currency')}
+                      className="w-full px-2 py-1"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button
+              onClick={callCredibilityApi}
+              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-700 mt-4"
+            >
+              Get Credibility Score
+            </button>
+          </>
+        )}
+        {credibilityScore !== null && (
           <table className="mt-4 w-full border-collapse border border-gray-300">
             <thead>
               <tr>
-                <th className="border border-gray-300 px-4 py-2">Invoice Number</th>
-                <th className="border border-gray-300 px-4 py-2">Date</th>
-                <th className="border border-gray-300 px-4 py-2">Client Name</th>
-                <th className="border border-gray-300 px-4 py-2">Type</th>
-                <th className="border border-gray-300 px-4 py-2">Total Amount</th>
-                <th className="border border-gray-300 px-4 py-2">Tax Amount</th>
-                <th className="border border-gray-300 px-4 py-2">Currency</th>
+                <th className="border border-gray-300 px-4 py-2">Credibility Score</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.invoice_number}
-                    onChange={(e) => handleInputChange(e, 'invoice_number')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.date}
-                    onChange={(e) => handleInputChange(e, 'date')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.client_name}
-                    onChange={(e) => handleInputChange(e, 'client_name')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.type}
-                    onChange={(e) => handleInputChange(e, 'type')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.total_amount}
-                    onChange={(e) => handleInputChange(e, 'total_amount')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.tax_amount}
-                    onChange={(e) => handleInputChange(e, 'tax_amount')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <input
-                    type="text"
-                    value={apiResponse.currency}
-                    onChange={(e) => handleInputChange(e, 'currency')}
-                    className="w-full px-2 py-1"
-                  />
-                </td>
+                <td className="border border-gray-300 px-4 py-2">{credibilityScore}</td>
               </tr>
             </tbody>
           </table>
