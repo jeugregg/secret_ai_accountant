@@ -5,7 +5,7 @@ use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use secret_toolkit::permit::Permit;
-use crate::state::Cred;
+use crate::state::Invoice;
 
 /// Instantiate message for the secret pass manager contract.
 ///
@@ -25,17 +25,8 @@ pub enum ExecuteMsg {
     Increment {},
     /// Reset the count to a specified value.
     Reset { count: i32 },
-    /// Add a new credential to the contract.
-    Add { credential: Cred},
-    // Add {
-    //     name: String,
-    //     url: String,
-    //     email: String,
-    //     login: String,
-    //     password: String,
-    //     note: String,
-    //     share: String,
-    // },
+    /// Add a new invoice to the contract.
+    Add { invoice: Invoice },
 }
 
 /// Query messages for the secret pass manager contract.
@@ -47,9 +38,9 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     // GetCount returns the current count as a json-encoded number
     GetCount {},
-    /// Retrieve all credentials associated with a given wallet address.
+    /// Retrieve all invoices associated with a given wallet address.
     GetAll {
-        /// The wallet address to retrieve credentials for
+        /// The wallet address to retrieve invoices for
         wallet: Addr,
          /// A permit to authenticate the query request.
         permit: Permit,
@@ -68,8 +59,8 @@ pub struct CountResponse {
 
 /// Response for the `GetAll` query message.
 ///
-/// This response contains a vector of credentials associated with a wallet address.
+/// This response contains a vector of invoices associated with a wallet address.
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, JsonSchema)]
-pub struct CredListResponse {
-    pub vect_cred: Vec<Cred>,
+pub struct InvoiceListResponse {
+    pub vect_invoice: Vec<Invoice>,
 }

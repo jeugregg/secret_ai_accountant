@@ -4,8 +4,8 @@ use cosmwasm_std::{
 };
 use secret_toolkit::permit::validate;
 use secret_toolkit::permit::Permit;
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, CredListResponse};
-use crate::state::{config, config_cred, config_cred_read, config_read, Cred, State};
+use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, InvoiceListResponse};
+use crate::state::{config, config_invoice, config_invoice_read, config_read, Invoice, State};
 use crate::state::PREFIX_REVOKED_PERMITS;
 /// Initializes the contract with a given count and sets the owner of the contract.
 ///
@@ -55,7 +55,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps, env),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
-        ExecuteMsg::Add { credential  } => try_add(deps, info, credential),
+        ExecuteMsg::Add { invoice } => try_add(deps, info, invoice),
     }
 }
 
@@ -104,26 +104,26 @@ pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> StdResult<Resp
     Ok(Response::default())
 }
 
-/// Attempts to add a new credential to the contract's state.
+/// Attempts to add a new invoice to the contract's state.
 ///
 /// # Arguments
 ///
 /// * `deps` - A mutable reference to the dependencies required by CosmWasm contracts.
 /// * `info` - Information about the message sender and other metadata.
-/// * `credential` - The credential to be added to the contract.
+/// * `invoice` - The invoice to be added to the contract.
 ///
 /// # Returns
 ///
 /// A `StdResult<Response>` indicating the success or failure of the add operation.
-pub fn try_add(deps: DepsMut, info: MessageInfo, credential: Cred) -> Result< Response, StdError> {
+pub fn try_add(deps: DepsMut, info: MessageInfo, invoice: Invoice) -> Result<Response, StdError> {
     let sender_address = info.sender.clone();
     let state = config_read(deps.storage).load()?;
     if sender_address != state.owner {
-        return Err(StdError::generic_err("Only the owner add Credential"))?;
+        return Err(StdError::generic_err("Only the owner can add Invoice"))?;
     }
     let index = b"0"; // Convert the integer to a byte slice
-    config_cred(deps.storage, index).save(&credential)?;
-    deps.api.debug("credential added successfully");
+    config_invoice(deps.storage, index).save(&invoice)?;
+    deps.api.debug("invoice added successfully");
     Ok(Response::default())
 }
 
@@ -164,26 +164,27 @@ fn query_count(deps: Deps) -> StdResult<CountResponse> {
     Ok(CountResponse { count: state.count })
 }
 
-/// Retrieves all credentials for a given wallet, validated by a permit.
+
+/// Retrieves all invoices for a given wallet, validated by a permit.
 ///
 /// # Arguments
 ///
 /// * `deps` - A reference to the dependencies required by CosmWasm contracts.
 /// * `env` - The environment object containing information about the current block, transaction, etc.
-/// * `wallet` - The address of the wallet for which credentials are being retrieved.
-/// * `permit` - The permit used to validate access to the credentials.
-/// * `index` - The index at which to start retrieving credentials.
+/// * `wallet` - The address of the wallet for which invoices are being retrieved.
+/// * `permit` - The permit used to validate access to the invoices.
+/// * `index` - The index at which to start retrieving invoices.
 ///
 /// # Returns
 ///
-/// A `StdResult<CredListResponse>` containing the list of credentials.
+/// A `StdResult<InvoiceListResponse>` containing the list of invoices.
 fn get_all(
     deps: Deps,
     env: Env,
     wallet: Addr,
     permit: Permit,
     _index: u8,
-) -> StdResult<CredListResponse> {
+) -> StdResult<InvoiceListResponse> {
 
     let contract_address = env.contract.address;
     let viewer = validate(
@@ -194,21 +195,20 @@ fn get_all(
         None,
     )?;
 
-
     let state = config_read(deps.storage).load()?;
 
     if wallet != state.owner {
-        return Err(StdError::generic_err("Only the owner add Credential"));
+        return Err(StdError::generic_err("Only the owner can add Invoice"));
     }
     if viewer != state.owner {
-        return Err(StdError::generic_err("Only the owner add Credential"));
+        return Err(StdError::generic_err("Only the owner can add Invoice"));
     }
     let index_conf = b"0"; // Convert the integer to a byte slice
-    let credential = config_cred_read(deps.storage, index_conf).load()?;
-    Ok(CredListResponse { 
-        vect_cred: vec![credential]
+    let invoice = config_invoice_read(deps.storage, index_conf).load()?;
+    Ok(InvoiceListResponse { 
+        vect_invoice: vec![invoice]
     })
-} 
+}
 
 #[cfg(test)]
 mod tests {
@@ -234,11 +234,11 @@ mod tests {
         pub get_all: GetAllData,
     }
 
-    /// Test function for retrieving all credentials.
+    /// Test function for retrieving all invoices.
     #[test]
-    fn get_cred_all() {
+    fn get_invoice_all() {
         let mut deps = mock_dependencies();
-        // Load data from a permet JSON file on disk (create by Client.query_get_all)
+        // Load data from a permit JSON file on disk (created by Client.query_get_all)
         let json_data_str = read_to_string(PATH_PERMIT).expect("Unable to read file");
         let json_data: JsonData = from_str(&json_data_str).expect("Failed to deserialize JSON data");
         let wallet = &json_data.get_all.wallet;
@@ -268,19 +268,24 @@ mod tests {
             instantiate_msg
         ).unwrap();
 
-        // Define a credential to add
-        let credential = Cred {
-            name: "example_name".to_string(),
-            url: "example_url".to_string(),
-            email: "example_email".to_string(),
-            login: "example_login".to_string(),
-            password: "example_password".to_string(),
-            note: "example_note".to_string(),
-            share: "example_share".to_string(),
+        // Define an invoice to add
+        let invoice = Invoice {
+            invoice_number: "INV-001".to_string(),
+            date: "2025-02-26".to_string(),
+            client_name: "Client A".to_string(),
+            description: "Service".to_string(),
+            total_amount: "1000".to_string(),
+            tax_amount: "100".to_string(),
+            currency: "USD".to_string(),
+            doc_hash: "hash123".to_string(),
+            line_hash: "linehash123".to_string(),
+            auditors: "Auditor A".to_string(),
+            credibility: "High".to_string(),
+            audit_state: "Pending".to_string(),
         };
 
         // Call the try_add function
-        let execute_msg = ExecuteMsg::Add { credential: credential.clone() };
+        let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
         let _res = execute(
             deps.as_mut(), 
             env.clone(), 
@@ -288,11 +293,11 @@ mod tests {
             execute_msg
         ).unwrap();
 
-        // Verify that the credential was added successfully
+        // Verify that the invoice was added successfully
         assert_eq!(_res.messages.len(), 0);
 
-        // Call the get_all function to retrieve all credentials
-        let list_cred = get_all(
+        // Call the get_all function to retrieve all invoices
+        let list_invoice = get_all(
             deps.as_ref(),
             env.clone(),
             wallet.clone(),
@@ -300,14 +305,30 @@ mod tests {
             index,
         );
 
-        println!("list_cred: {:?}", list_cred);
+        println!("list_invoice: {:?}", list_invoice);
 
-        // Verify that the credential was added successfully
-        match list_cred {
+        // Verify that the invoice was retrieved successfully
+        match list_invoice {
             Err(StdError::GenericErr { .. }) => panic!("Must return unauthorized error"),
-            _ => {}
+            Err(e) => panic!("Unexpected error: {:?}", e),
+            Ok(response) => {
+                let invoices = response.vect_invoice;
+                assert_eq!(invoices.len(), 1);
+                let retrieved_invoice = &invoices[0];
+                assert_eq!(retrieved_invoice.invoice_number, "INV-001");
+                assert_eq!(retrieved_invoice.date, "2025-02-26");
+                assert_eq!(retrieved_invoice.client_name, "Client A");
+                assert_eq!(retrieved_invoice.description, "Service");
+                assert_eq!(retrieved_invoice.total_amount, "1000");
+                assert_eq!(retrieved_invoice.tax_amount, "100");
+                assert_eq!(retrieved_invoice.currency, "USD");
+                assert_eq!(retrieved_invoice.doc_hash, "hash123");
+                assert_eq!(retrieved_invoice.line_hash, "linehash123");
+                assert_eq!(retrieved_invoice.auditors, "Auditor A");
+                assert_eq!(retrieved_invoice.credibility, "High");
+                assert_eq!(retrieved_invoice.audit_state, "Pending");
+            }
         }
-
     }
 
     /// Test function to ensure proper contract initialization.
@@ -338,94 +359,6 @@ mod tests {
         ).unwrap();
         let value: CountResponse = from_binary(&res).unwrap();
         assert_eq!(17, value.count);
-    }
-
-    /// Test function for adding a credential.
-    #[test]
-    fn add_credential() {
-        // Initialize mock dependencies
-        let mut deps = mock_dependencies_with_balance(&[Coin {
-            denom: "token".to_string(),
-            amount: Uint128::new(2),
-        }]);
-
-        // Set up the mock environment and instantiate message
-        let info = mock_info(
-            "creator",
-            &[Coin {
-                denom: "token".to_string(),
-                amount: Uint128::new(2),
-            }],
-        );
-
-        // Instantiate the contract
-        let instantiate_msg = InstantiateMsg { count: 0 };
-        let _res = instantiate(
-            deps.as_mut(), 
-            mock_env(), 
-            info.clone(), 
-            instantiate_msg
-        ).unwrap();
-
-    
-        // Define a credential to add
-        let credential = Cred {
-            name: "example_name".to_string(),
-            url: "example_url".to_string(),
-            email: "example_email".to_string(),
-            login: "example_login".to_string(),
-            password: "example_password".to_string(),
-            note: "example_note".to_string(),
-            share: "example_share".to_string(),
-        };
-
-        // Call the try_add function
-        let execute_msg = ExecuteMsg::Add { credential: credential.clone() };
-        let _res = execute(
-            deps.as_mut(), 
-            mock_env(), 
-            info.clone(), 
-            execute_msg
-        ).unwrap();
-    
-        // Verify that the credential was added successfully
-        assert_eq!(_res.messages.len(), 0);
-        
-    
-        // Retrieve and verify the saved credential
-        let index = b"0"; // Convert the integer to a byte slice
-        let stored_cred: Cred = config_cred_read(deps.as_mut().storage, index).load().unwrap();
-
-        assert_eq!(stored_cred.name, "example_name");
-        assert_eq!(stored_cred.url, "example_url");
-        assert_eq!(stored_cred.email, "example_email");
-        assert_eq!(stored_cred.login, "example_login");
-        assert_eq!(stored_cred.password, "example_password");
-        assert_eq!(stored_cred.note, "example_note");
-        assert_eq!(stored_cred.share, "example_share");
-
-        // Verfy that only "creator" can add a credential
-        let _info_public = mock_info(
-            "public",
-            &[Coin {
-                denom: "token".to_string(),
-                amount: Uint128::new(2),
-            }],
-        );
-        let execute_msg = ExecuteMsg::Add { credential: credential.clone()};
-        let _res  = execute(
-            deps.as_mut(), 
-            mock_env(), 
-            _info_public.clone(), 
-            execute_msg
-        );
-        
-        // Verify that the credential is not added
-        match _res {
-            Err(StdError::GenericErr { .. }) => {}
-            _ => panic!("Must return unauthorized error")
-        }
-
     }
 
    /// Test function for incrementing a counter.
@@ -522,4 +455,98 @@ mod tests {
         assert_eq!(5, value.count);
     }
 
+    /// Test function for adding an invoice.
+    #[test]
+    fn add_invoice() {
+        // Initialize mock dependencies
+        let mut deps = mock_dependencies_with_balance(&[Coin {
+            denom: "token".to_string(),
+            amount: Uint128::new(2),
+        }]);
+
+        // Set up the mock environment and instantiate message
+        let info = mock_info(
+            "creator",
+            &[Coin {
+                denom: "token".to_string(),
+                amount: Uint128::new(2),
+            }],
+        );
+
+        // Instantiate the contract
+        let instantiate_msg = InstantiateMsg { count: 0 };
+        let _res = instantiate(
+            deps.as_mut(), 
+            mock_env(), 
+            info.clone(), 
+            instantiate_msg
+        ).unwrap();
+
+        // Define an invoice to add
+        let invoice = Invoice {
+            invoice_number: "INV-001".to_string(),
+            date: "2025-02-26".to_string(),
+            client_name: "Client A".to_string(),
+            description: "Service".to_string(),
+            total_amount: "1000".to_string(),
+            tax_amount: "100".to_string(),
+            currency: "USD".to_string(),
+            doc_hash: "hash123".to_string(),
+            line_hash: "linehash123".to_string(),
+            auditors: "Auditor A".to_string(),
+            credibility: "High".to_string(),
+            audit_state: "Pending".to_string(),
+        };
+
+        // Call the try_add function
+        let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
+        let _res = execute(
+            deps.as_mut(), 
+            mock_env(), 
+            info.clone(), 
+            execute_msg
+        ).unwrap();
+
+        // Verify that the invoice was added successfully
+        assert_eq!(_res.messages.len(), 0);
+
+        // Retrieve and verify the saved invoice
+        let index = b"0"; // Convert the integer to a byte slice
+        let stored_invoice: Invoice = config_invoice_read(deps.as_mut().storage, index).load().unwrap();
+
+        assert_eq!(stored_invoice.invoice_number, "INV-001");
+        assert_eq!(stored_invoice.date, "2025-02-26");
+        assert_eq!(stored_invoice.client_name, "Client A");
+        assert_eq!(stored_invoice.description, "Service");
+        assert_eq!(stored_invoice.total_amount, "1000");
+        assert_eq!(stored_invoice.tax_amount, "100");
+        assert_eq!(stored_invoice.currency, "USD");
+        assert_eq!(stored_invoice.doc_hash, "hash123");
+        assert_eq!(stored_invoice.line_hash, "linehash123");
+        assert_eq!(stored_invoice.auditors, "Auditor A");
+        assert_eq!(stored_invoice.credibility, "High");
+        assert_eq!(stored_invoice.audit_state, "Pending");
+
+        // Verify that only "creator" can add an invoice
+        let _info_public = mock_info(
+            "public",
+            &[Coin {
+                denom: "token".to_string(),
+                amount: Uint128::new(2),
+            }],
+        );
+        let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
+        let _res = execute(
+            deps.as_mut(), 
+            mock_env(), 
+            _info_public.clone(), 
+            execute_msg
+        );
+
+        // Verify that the invoice is not added
+        match _res {
+            Err(StdError::GenericErr { .. }) => {}
+            _ => panic!("Must return unauthorized error")
+        }
+    }
 }

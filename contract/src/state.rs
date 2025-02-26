@@ -38,34 +38,39 @@ pub fn config_read(storage: &dyn Storage) -> ReadonlySingleton<State> {
     singleton_read(storage, CONFIG_KEY)
 }
 
-/// Represents a credential entry in the secret pass manager contract.
+/// Represents an invoice entry in the secret pass manager contract.
 ///
-/// This structure is serialized and deserialized using serde and stored persistently in the blockchain. Each credential
+/// This structure is serialized and deserialized using serde and stored persistently in the blockchain. Each invoice
 /// can be identified by an index.
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, JsonSchema)]
-pub struct Cred {
-    pub name: String,
-    pub url: String,
-    pub email: String,
-    pub login: String,
-    pub password: String,
-    pub note: String,
-    pub share: String,
+pub struct Invoice {
+    pub invoice_number: String,
+    pub date: String,
+    pub client_name: String,
+    pub description: String,
+    pub total_amount: String,
+    pub tax_amount: String,
+    pub currency: String,
+    pub doc_hash: String,
+    pub line_hash: String,
+    pub auditors: String,
+    pub credibility: String,
+    pub audit_state: String,
 }
 
-/// Retrieves a mutable singleton handle for a credential based on an index.
+/// Retrieves a mutable singleton handle for an invoice based on an index.
 ///
 /// This function takes a mutable reference to a storage implementation and an index, returning a Singleton handle that
-/// can be used to read and write the credential data persistently in the blockchain.
-pub fn config_cred<'a>(storage: &'a mut dyn Storage, index: &[u8]) -> Singleton<'a, Cred> {
+/// can be used to read and write the invoice data persistently in the blockchain.
+pub fn config_invoice<'a>(storage: &'a mut dyn Storage, index: &[u8]) -> Singleton<'a, Invoice> {
     singleton(storage, index)
 }
 
-/// Retrieves a read-only singleton handle for a credential based on an index.
+/// Retrieves a read-only singleton handle for an invoice based on an index.
 ///
 /// This function takes a reference to a storage implementation and an index, returning a ReadonlySingleton handle that
-/// can be used to read the credential data persistently in the blockchain without being able to modify it.
-pub fn config_cred_read<'a>(storage: &'a dyn Storage, index: &[u8]) -> ReadonlySingleton<'a, Cred> {
+/// can be used to read the invoice data persistently in the blockchain without being able to modify it.
+pub fn config_invoice_read<'a>(storage: &'a dyn Storage, index: &[u8]) -> ReadonlySingleton<'a, Invoice> {
     singleton_read(storage, index)
 }
 
