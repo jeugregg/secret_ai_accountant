@@ -1,0 +1,23 @@
+{
+  "get_all": {
+    "wallet": "secret172j5kfvwkudzl2cpxtmdy5pxes8azqfuuhuyvy",
+    "index": 0,
+    "permit": {
+      "params": {
+        "permit_name": "view_cred",
+        "allowed_tokens": [
+          "secret1qk7fulq7g7z79ucwk3un99kpvl0yxypnn0ze08"
+        ],
+        "chain_id": "pulsar-3",
+        "permissions": []
+      },
+      "signature": {
+        "pub_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AyLDC4cA6teBpxjyEvpjFdNGO3h/YSvJ7yd2coZ0gon7"
+        },
+        "signature": "h1c0mtogEqLnmB0WZsf7YMILC3uWZPy70QzQilSafqNuxMSfZ4FnrRnBPoXWulwIsTY+bJ2Zf26nuZ97K2Vi2w=="
+      }
+    }
+  }
+}
