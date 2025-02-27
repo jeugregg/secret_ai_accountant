@@ -2,8 +2,26 @@ import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import PDFViewer from './PDFViewer'
 import ocrService from './OCRService'
+import { Wallet, SecretNetworkClient, MsgSend, MsgMultiSend, stringToCoins } from "secretjs";
 const apiInvoiceUrl = 'http://localhost:5000/api/invoice'
 const apiCredibilityUrl = 'http://localhost:5000/api/credibility'
+const owner_addr = "secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r"
+const contract_addr = "secret1fu0jw5ery758xpdgv98rdr0v52uhd827k37g9c"
+const code_hash = "f2bcfe74638d864143909ab6a02c9b5db81fd131f3bd4124b6a0f5ee88119f02"
+const url_lcd = "https://pulsar.lcd.secretnodes.com"
+const chain_id = "pulsar-3"
+// get from env 
+const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
+
+
+const wallet = new Wallet(MNEMONIC_ONWER)
+const myAddress = wallet.address;
+const secretjs = new SecretNetworkClient({
+  url: url_lcd,
+  chainId: chain_id,
+  wallet: wallet,
+  walletAddress: myAddress,
+});
 
 interface ApiResponse {
   invoice_number: string
@@ -20,6 +38,7 @@ const App: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null)
   const [credibilityScore, setCredibilityScore] = useState<number | null>(null)
+  const [balance, setBalance] = useState<string | null>(null)
 
   const handleFileChange = (file: File) => {
     setUploadedFile(file)
@@ -86,6 +105,38 @@ const App: React.FC = () => {
     }
   }
 
+  const checkBalance = async () => {
+    try {
+      //const secretjs = new SecretNetworkClient({
+      //  url: url_lcd,
+      //  chainId: chain_id,
+      //})
+
+      const { balance }  = await secretjs.query.bank.balance(
+        {
+          address: owner_addr,
+          denom: 'uscrt',
+        }
+      )
+
+      setBalance(`I have ${Number(balance.amount) / 1e6} SCRT!`)
+
+      type Result = {
+          count: number;
+      }
+      
+      const result = (await secretjs.query.compute.queryContract({
+        contract_address: contract_addr,
+        code_hash: code_hash,
+        query: {get_count: {}},
+      })) as Result
+      console.log(result)
+      
+    } catch (error) {
+      console.error('Error checking balance:', error)
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof ApiResponse) => {
     if (apiResponse) {
       setApiResponse({
@@ -99,6 +150,14 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center w-full">
       <div className="bg-white p-8 rounded-lg shadow-md w-full">
         <h1 className="text-2xl font-bold mb-6 text-center">PDF OCR Extractor</h1>
+        <button
+          onClick={checkBalance}
+          className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 mt-4"
+        >
+          Check Balance
+        </button>
+        <p className="mt-4">My Address: {myAddress}</p>
+        {balance && <p className="mt-4">{balance}</p>}
         <FileUpload onFileChange={handleFileChange} />
         {uploadedFile && (
           <button
