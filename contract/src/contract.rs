@@ -56,6 +56,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         ExecuteMsg::Increment {} => try_increment(deps, env),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
         ExecuteMsg::Add { invoice } => try_add(deps, info, invoice),
+        ExecuteMsg::UpdateAuditor { invoice_index, auditor } => try_update_auditor(deps, info, invoice_index, auditor),
     }
 }
 
@@ -121,12 +122,50 @@ pub fn try_add(deps: DepsMut, info: MessageInfo, invoice: Invoice) -> Result<Res
     if sender_address != state.owner {
         return Err(StdError::generic_err("Only the owner can add Invoice"))?;
     }
-    let index = b"0"; // Convert the integer to a byte slice
-    config_invoice(deps.storage, index).save(&invoice)?;
+    //let invoice_index: u8 = 0;
+    //let index = invoice_index.to_be_bytes();
+    let index_conf = b"0"; // Convert the integer to a byte slice
+    //let index = b"0"; // Convert the integer to a byte slice
+    config_invoice(deps.storage, index_conf).save(&invoice)?;
     deps.api.debug("invoice added successfully");
     Ok(Response::default())
 }
 
+/// Attempts to update the auditor field of an existing invoice.
+///
+/// # Arguments
+///
+/// * `deps` - A mutable reference to the dependencies required by CosmWasm contracts.
+/// * `info` - Information about the message sender and other metadata.
+/// * `invoice_number` - The invoice number of the invoice to be updated.
+/// * `auditor_name` - The new auditor name to set.
+///
+/// # Returns
+///
+/// A `StdResult<Response>` indicating the success or failure of the update operation.
+pub fn try_update_auditor(
+    deps: DepsMut,
+    info: MessageInfo,
+    invoice_index: u8,
+    auditor: Addr,
+) -> Result<Response, StdError> {
+    let sender_address = info.sender.clone();
+    let state = config_read(deps.storage).load()?;
+    if sender_address != state.owner {
+        return Err(StdError::generic_err("Only the owner can update the auditor"))?;
+    }
+
+    //let index = invoice_index.to_be_bytes();
+    let index_conf = b"0"; // Convert the integer to a byte slice
+    config_invoice(deps.storage, index_conf).update(|mut invoice| -> Result<_, StdError> {
+
+        invoice.auditors = auditor.to_string();
+        Ok(invoice)
+    })?;
+
+    deps.api.debug("auditor updated successfully");
+    Ok(Response::default())
+}
 /// Handles query messages to retrieve data from the contract's state.
 ///
 /// # Arguments
@@ -205,7 +244,7 @@ fn get_all(
     }
     let index_conf = b"0"; // Convert the integer to a byte slice
     let invoice = config_invoice_read(deps.storage, index_conf).load()?;
-    Ok(InvoiceListResponse { 
+    Ok(InvoiceListResponse {
         vect_invoice: vec![invoice]
     })
 }
@@ -262,9 +301,9 @@ mod tests {
         // Instantiate the contract
         let instantiate_msg = InstantiateMsg { count: 0 };
         let _res = instantiate(
-            deps.as_mut(), 
-            env.clone(), 
-            info.clone(), 
+            deps.as_mut(),
+            env.clone(),
+            info.clone(),
             instantiate_msg
         ).unwrap();
 
@@ -287,9 +326,9 @@ mod tests {
         // Call the try_add function
         let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
         let _res = execute(
-            deps.as_mut(), 
-            env.clone(), 
-            info.clone(), 
+            deps.as_mut(),
+            env.clone(),
+            info.clone(),
             execute_msg
         ).unwrap();
 
@@ -476,9 +515,9 @@ mod tests {
         // Instantiate the contract
         let instantiate_msg = InstantiateMsg { count: 0 };
         let _res = instantiate(
-            deps.as_mut(), 
-            mock_env(), 
-            info.clone(), 
+            deps.as_mut(),
+            mock_env(),
+            info.clone(),
             instantiate_msg
         ).unwrap();
 
@@ -501,9 +540,9 @@ mod tests {
         // Call the try_add function
         let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
         let _res = execute(
-            deps.as_mut(), 
-            mock_env(), 
-            info.clone(), 
+            deps.as_mut(),
+            mock_env(),
+            info.clone(),
             execute_msg
         ).unwrap();
 
@@ -537,9 +576,9 @@ mod tests {
         );
         let execute_msg = ExecuteMsg::Add { invoice: invoice.clone() };
         let _res = execute(
-            deps.as_mut(), 
-            mock_env(), 
-            _info_public.clone(), 
+            deps.as_mut(),
+            mock_env(),
+            _info_public.clone(),
             execute_msg
         );
 
@@ -548,5 +587,63 @@ mod tests {
             Err(StdError::GenericErr { .. }) => {}
             _ => panic!("Must return unauthorized error")
         }
+    }
+
+    /// Test function for updating an invoice auditor.
+    #[test]
+    fn update_auditor() {
+        let mut deps = mock_dependencies();
+        let info = mock_info(
+            "creator",
+            &[Coin {
+                denom: "earth".to_string(),
+                amount: Uint128::new(1000),
+            }],
+        );
+        let mut env = mock_env();
+
+        // Load data from a permit JSON file on disk (created by Client.query_get_all)
+        let json_data_str = read_to_string(PATH_PERMIT).expect("Unable to read file");
+        let json_data: JsonData = from_str(&json_data_str).expect("Failed to deserialize JSON data");
+        let wallet = &json_data.get_all.wallet;
+        let index = json_data.get_all.index;
+        let permit = json_data.get_all.permit;
+        println!("wallet: {:?}", &wallet);
+        println!("index: {:?}", index);
+        println!("permit: {:?}", permit);
+        // Set up the mock environment and contract address
+    
+        let contract_address = permit.clone().params.allowed_tokens[0].clone();
+        env.contract.address = Addr::unchecked(contract_address);
+
+        let instantiate_msg = InstantiateMsg { count: 0 };
+        let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), instantiate_msg).unwrap();
+
+        let invoice = Invoice {
+            invoice_number: "INV-001".to_string(),
+            date: "2025-02-26".to_string(),
+            client_name: "Client A".to_string(),
+            description: "Service".to_string(),
+            total_amount: "1000".to_string(),
+            tax_amount: "100".to_string(),
+            currency: "USD".to_string(),
+            doc_hash: "hash123".to_string(),
+            line_hash: "linehash123".to_string(),
+            auditors: "Auditor A".to_string(),
+            credibility: "High".to_string(),
+            audit_state: "Pending".to_string(),
+        };
+
+        let _res = try_add(deps.as_mut(), info.clone(), invoice.clone()).unwrap();
+
+        let new_auditor = Addr::unchecked("new_auditor");
+        let index_u8 = 0;
+        let res = try_update_auditor(deps.as_mut(), info, index_u8, new_auditor.clone()).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        //let index = index_u8.to_be_bytes(); // Convert the integer to a byte slice
+        let index_conf = b"0"; // Convert the integer to a byte slice
+        let updated_invoice = config_invoice_read(&deps.storage, index_conf).load().unwrap();
+        assert_eq!(updated_invoice.auditors, new_auditor.to_string());    
     }
 }

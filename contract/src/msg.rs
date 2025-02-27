@@ -27,6 +27,12 @@ pub enum ExecuteMsg {
     Reset { count: i32 },
     /// Add a new invoice to the contract.
     Add { invoice: Invoice },
+    /// Update the auditor for a specific invoice.
+    /// 
+    /// # Arguments
+    /// * `invoice_index` - The index of the invoice to update.
+    /// * `auditor` - The new auditor address.
+    UpdateAuditor { invoice_index: u8, auditor: Addr },
 }
 
 /// Query messages for the secret pass manager contract.
