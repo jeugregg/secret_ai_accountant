@@ -2,26 +2,17 @@ import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import PDFViewer from './PDFViewer'
 import ocrService from './OCRService'
-import { Wallet, SecretNetworkClient} from "secretjs";
+import { Wallet, SecretNetworkClient } from "secretjs";
 import { add_invoice } from './contract'
-//import { add_invoice } from './contract' // Import the add_invoice function
+import { config } from './config'
 
-const apiInvoiceUrl = 'http://localhost:5000/api/invoice'
-const apiCredibilityUrl = 'http://localhost:5000/api/credibility'
-const owner_addr = "secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r"
-const contract_addr = "secret1fu0jw5ery758xpdgv98rdr0v52uhd827k37g9c"
-const code_hash = "f2bcfe74638d864143909ab6a02c9b5db81fd131f3bd4124b6a0f5ee88119f02"
-const url_lcd = "https://pulsar.lcd.secretnodes.com"
-const chain_id = "pulsar-3"
-// get from env 
 const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
-
 
 const wallet = new Wallet(MNEMONIC_ONWER)
 const myAddress = wallet.address;
 const secretjs = new SecretNetworkClient({
-  url: url_lcd,
-  chainId: chain_id,
+  url: config.urlLcd,
+  chainId: config.chainId,
   wallet: wallet,
   walletAddress: myAddress,
 });
@@ -60,7 +51,7 @@ const App: React.FC = () => {
   const callApi = async () => {
     if (!pdfText) return
     try {
-      const response = await fetch(apiInvoiceUrl, {
+      const response = await fetch(config.apiInvoiceUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +76,7 @@ const App: React.FC = () => {
   const callCredibilityApi = async () => {
     if (!pdfText || !apiResponse) return
     try {
-      const response = await fetch(apiCredibilityUrl, {
+      const response = await fetch(config.apiCredibilityUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +103,7 @@ const App: React.FC = () => {
     try {
       const { balance }  = await secretjs.query.bank.balance(
         {
-          address: owner_addr,
+          address: config.ownerAddress,
           denom: 'uscrt',
         }
       )
@@ -124,8 +115,8 @@ const App: React.FC = () => {
       }
       
       const result = (await secretjs.query.compute.queryContract({
-        contract_address: contract_addr,
-        code_hash: code_hash,
+        contract_address: config.contractAddress,
+        code_hash: config.codeHash,
         query: {get_count: {}},
       })) as Result
       console.log(result)
