@@ -2,7 +2,10 @@ import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import PDFViewer from './PDFViewer'
 import ocrService from './OCRService'
-import { Wallet, SecretNetworkClient, MsgSend, MsgMultiSend, stringToCoins } from "secretjs";
+import { Wallet, SecretNetworkClient} from "secretjs";
+import { add_invoice } from './contract'
+//import { add_invoice } from './contract' // Import the add_invoice function
+
 const apiInvoiceUrl = 'http://localhost:5000/api/invoice'
 const apiCredibilityUrl = 'http://localhost:5000/api/credibility'
 const owner_addr = "secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r"
@@ -107,11 +110,6 @@ const App: React.FC = () => {
 
   const checkBalance = async () => {
     try {
-      //const secretjs = new SecretNetworkClient({
-      //  url: url_lcd,
-      //  chainId: chain_id,
-      //})
-
       const { balance }  = await secretjs.query.bank.balance(
         {
           address: owner_addr,
@@ -143,6 +141,31 @@ const App: React.FC = () => {
         ...apiResponse,
         [field]: e.target.value,
       })
+    }
+  }
+
+  const sealOnBC = async () => {
+    if (!apiResponse) return
+    try {
+      const invoice = {
+        invoice_number: apiResponse.invoice_number,
+        date: apiResponse.date,
+        client_name: apiResponse.client_name,
+        description: apiResponse.type,
+        total_amount: apiResponse.total_amount.toString(),
+        tax_amount: apiResponse.tax_amount.toString(),
+        currency: apiResponse.currency,
+        doc_hash: '', // Add appropriate value
+        line_hash: '', // Add appropriate value
+        auditors: '', // Add appropriate value
+        credibility: credibilityScore?.toString() || '',
+        audit_state: '', // Add appropriate value
+      }
+
+      await add_invoice(secretjs, invoice)
+      console.log('Invoice sealed on blockchain:', invoice)
+    } catch (error) {
+      console.error('Error sealing invoice on blockchain:', error)
     }
   }
 
@@ -254,6 +277,12 @@ const App: React.FC = () => {
               className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-700 mt-4"
             >
               Get Credibility Score
+            </button>
+            <button
+              onClick={sealOnBC}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-700 mt-4"
+            >
+              Seal on BC
             </button>
           </>
         )}
