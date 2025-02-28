@@ -233,8 +233,14 @@ const CompanyScreen: React.FC = () => {
       console.log('Invoice sealed on blockchain:', invoice);
 
       try {
-        const result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
+        let result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
         console.log('Fetched invoices:', result);
+
+        // Update the tx_hash of the result with tx.transactionHash
+        result = result.map((invoice) => ({
+          ...invoice,
+          tx_hash: tx.transactionHash,
+        }));
 
         // Update the Ledger Table with result
         setLedgerData(result);
