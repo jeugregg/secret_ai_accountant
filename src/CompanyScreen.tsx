@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ocrService from './OCRService';
 import { createFingerprint } from './CreateFingerprint'; 
 import { config } from './config'
@@ -102,60 +102,62 @@ const CompanyScreen: React.FC = () => {
     }));
   };
 
-
-
-
-
   const callApi = async () => {
-      if (!ocrResults) return
-      try {
-        const response = await fetch(config.apiInvoiceUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            data: ocrResults
-          }),
-        })
-  
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-  
-        const result: ApiResponsePrefill = await response.json()
-        setTableData(result)
-        console.log('API response:', result)
-      } catch (error) {
-        console.error('Error calling API:', error)
+    if (!ocrResults) return;
+    try {
+      const response = await fetch(config.apiInvoiceUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: ocrResults
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
+
+      const result: ApiResponsePrefill = await response.json();
+      setTableData(result);
+      console.log('API response:', result);
+    } catch (error) {
+      console.error('Error calling API:', error);
     }
+  }
   
-    const callCredibilityApi = async () => {
-      if (!ocrResults || !tableData) return
-      try {
-        const response = await fetch(config.apiCredibilityUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            invoice: ocrResults,
-            accounting_row: tableData
-          }),
-        })
-  
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-  
-        const result = await response.json()
-        setCredibilityScore(result.credibility)
-        console.log('Credibility API response:', result)
-      } catch (error) {
-        console.error('Error calling credibility API:', error)
+  const callCredibilityApi = async () => {
+    if (!ocrResults || !tableData) return
+    try {
+      const response = await fetch(config.apiCredibilityUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoice: ocrResults,
+          accounting_row: tableData
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
       }
+
+      const result = await response.json()
+      setCredibilityScore(result.credibility)
+      console.log('Credibility API response:', result)
+    } catch (error) {
+      console.error('Error calling credibility API:', error)
     }
+  };
+
+  useEffect(() => {
+    if (ocrResults) {
+      callApi();
+    }
+  }, [ocrResults]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
