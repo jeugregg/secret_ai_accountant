@@ -207,6 +207,9 @@ const CompanyScreen: React.FC = () => {
   const sealOnBC = async () => {
     if (!tableData) return;
     try {
+      // Call the credibility API and wait for it to complete
+      await callCredibilityApi();
+
       // hash the line data with : invoice_number, date, client_name, description, total_amount, tax_amount, currency
       const line_hash = hashLinedata(tableData, fingerprint);
 
@@ -438,10 +441,7 @@ const CompanyScreen: React.FC = () => {
             {/* SEAL in BC with Progress Loaders Below */}
             <div className="flex flex-wrap flex-col items-center">
               <button
-                onClick={async () => {
-                  await callCredibilityApi();
-                  await sealOnBC();
-                }}
+                onClick={sealOnBC}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
                 <FileSignature className="mr-2" />
                 SEAL in BC
