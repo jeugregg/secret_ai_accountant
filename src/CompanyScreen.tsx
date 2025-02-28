@@ -60,6 +60,22 @@ interface ApiResponse {
   audit_state: string
 }
 
+interface BcResponse {
+  invoice_number: string
+  date: string
+  tx_hash: string
+  doc_hash: string
+  line_hash: string
+  auditors: string
+  credibility: string
+  audit_state: string
+  client_name: string
+  description: string
+  total_amount: number
+  tax_amount: number
+  currency: string
+}
+
 // Function to hash line data
 const hashLinedata = (tableData: ApiResponsePrefill, fingerprint: string): string => {
   const dataString = `${tableData.invoice_number}${tableData.date}${tableData.client_name}${tableData.description}${tableData.total_amount}${tableData.tax_amount}${tableData.currency}${fingerprint}`;
@@ -84,6 +100,11 @@ const CompanyScreen: React.FC = () => {
     tax_amount: 0,
     currency: '',
   });
+  const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
 
   // Gère le scroll horizontal avec Shift + Molette
   const handleScroll = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -184,12 +205,10 @@ const CompanyScreen: React.FC = () => {
   };
 
   const sealOnBC = async () => {
-    if (!tableData) return
+    if (!tableData) return;
     try {
-
       // hash the line data with : invoice_number, date, client_name, description, total_amount, tax_amount, currency
-      const line_hash = hashLinedata(tableData, fingerprint)
-      
+      const line_hash = hashLinedata(tableData, fingerprint);
 
       const invoice = {
         invoice_number: tableData.invoice_number,
@@ -204,18 +223,35 @@ const CompanyScreen: React.FC = () => {
         auditors: '',
         credibility: credibilityScore?.toString() || '',
         audit_state: '',
-      }
+      };
 
-      const tx = await add_invoice(secretjs, invoice)
-      //setTransactionHash(tx.transactionHash)
+      const tx = await add_invoice(secretjs, invoice);
       console.log('Seal Transaction :', tx);
-      console.log('Invoice sealed on blockchain:', invoice)
+      console.log('Invoice sealed on blockchain:', invoice);
+
+      try {
+        const result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
+        console.log('Fetched invoices:', result);
+
+        // Update the Ledger Table with result
+        setLedgerData(result);
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+      }
     } catch (error) {
-      console.error('Error sealing invoice on blockchain:', error)
+      console.error('Error sealing invoice on blockchain:', error);
     }
   }
 
-
+  const fetchInvoices = async () => {
+    try {
+      const result = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress)
+      console.log('Fetched invoices:', result)
+      //setInvoices(result)
+    } catch (error) {
+      console.error('Error fetching invoices:', error)
+    }
+  }
 
   useEffect(() => {
     if (ocrResults) {
@@ -435,30 +471,24 @@ const CompanyScreen: React.FC = () => {
 
       {/* Ledger Table avec Scroll Horizontal */}
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
-        <h2 className="text-xl font-bold mb-6"></h2>
+        <h2 className="text-xl font-bold mb-6">Automatic Secured Ledger</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
           <table className="min-w-max border-collapse">
             <thead className="bg-gray-100 sticky top-0 z-10 shadow-md">
               <tr>
-                {[
-                  "Selection", "Company Wallet", "Accounting Line ID", "Date", "Ref.",
-                  "Supplier", "Description", "Amount (Excl. Tax)", "VAT (18%)",
-                  "Total (Incl. Tax)", "Document Hash", "Accounting Line Hash",
-                  "Secret Ledger Status", "Blockchain Transaction", "Credibility Score",
-                  "Auditor Wallet", "Audit Progress", "Audit Decision"
-                ].map((header, index) => (
+                {ledgerData.length > 0 && Object.keys(ledgerData[0]).map((header, index) => (
                   <th key={index} className="px-4 py-2 border-b border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase whitespace-nowrap">
-                    {header}
+                    {header.replace('_', ' ')}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 1 }).map((_, rowIndex) => (
+              {ledgerData.map((invoice, rowIndex) => (
                 <tr key={rowIndex} className="even:bg-gray-50">
-                  {Array.from({ length: 18 }).map((_, colIndex) => (
+                  {Object.values(invoice).map((value, colIndex) => (
                     <td key={colIndex} className="px-4 py-2 border border-gray-300 whitespace-nowrap">
-                      {`Data ${rowIndex + 1}-${colIndex + 1}`}
+                      {value}
                     </td>
                   ))}
                 </tr>
