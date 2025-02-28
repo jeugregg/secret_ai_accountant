@@ -44,6 +44,7 @@ const CompanyScreen: React.FC = () => {
   const [fingerprint, setFingerprint] = useState('');
   const [ocrResults, setOcrResults] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [credibilityScore, setCredibilityScore] = useState(0);
   const [tableData, setTableData] = useState<ApiResponsePrefill>({
     invoice_number: '',
     date: '',
@@ -100,6 +101,61 @@ const CompanyScreen: React.FC = () => {
       [field]: field === 'total_amount' || field === 'tax_amount' ? parseFloat(value) : value
     }));
   };
+
+
+
+
+
+  const callApi = async () => {
+      if (!ocrResults) return
+      try {
+        const response = await fetch(config.apiInvoiceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: ocrResults
+          }),
+        })
+  
+        if (!response.ok) {
+          throw new Error('Network response was not ok')
+        }
+  
+        const result: ApiResponsePrefill = await response.json()
+        setTableData(result)
+        console.log('API response:', result)
+      } catch (error) {
+        console.error('Error calling API:', error)
+      }
+    }
+  
+    const callCredibilityApi = async () => {
+      if (!ocrResults || !tableData) return
+      try {
+        const response = await fetch(config.apiCredibilityUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            invoice: ocrResults,
+            accounting_row: tableData
+          }),
+        })
+  
+        if (!response.ok) {
+          throw new Error('Network response was not ok')
+        }
+  
+        const result = await response.json()
+        setCredibilityScore(result.credibility)
+        console.log('Credibility API response:', result)
+      } catch (error) {
+        console.error('Error calling credibility API:', error)
+      }
+    }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
