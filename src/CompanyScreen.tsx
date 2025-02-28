@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import ocrService from './OCRService';
 import { createFingerprint } from './CreateFingerprint'; 
-
+import { config } from './config'
 // Import assets
 import logo from './assets/Company_11.svg';
 import avatar from './assets/Company_avatar.svg';
@@ -13,14 +13,28 @@ import {
 } from 'lucide-react';
 
 // Interface pour l'API
-interface ApiResponse {
+interface ApiResponsePrefill {
   invoice_number: string;
   date: string;
   client_name: string;
-  type: string;
+  description: string;
   total_amount: number;
   tax_amount: number;
   currency: string;
+}
+interface ApiResponse {
+  invoice_number: string
+  date: string
+  client_name: string
+  description: string
+  total_amount: number
+  tax_amount: number
+  currency: string
+  doc_hash: string
+  line_hash: string
+  auditors: string
+  credibility: string
+  audit_state: string
 }
 
 const CompanyScreen: React.FC = () => {
@@ -30,6 +44,15 @@ const CompanyScreen: React.FC = () => {
   const [fingerprint, setFingerprint] = useState('');
   const [ocrResults, setOcrResults] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [tableData, setTableData] = useState<ApiResponsePrefill>({
+    invoice_number: '',
+    date: '',
+    client_name: '',
+    description: '',
+    total_amount: 0,
+    tax_amount: 0,
+    currency: '',
+  });
 
   // Gère le scroll horizontal avec Shift + Molette
   const handleScroll = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -67,6 +90,15 @@ const CompanyScreen: React.FC = () => {
     } catch (error) {
       console.error('Error extracting text:', error);
     }
+  };
+
+  // Handle table input changes
+  const handleTableChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof ApiResponse) => {
+    const value = e.target.value;
+    setTableData((prevData) => ({
+      ...prevData,
+      [field]: field === 'total_amount' || field === 'tax_amount' ? parseFloat(value) : value
+    }));
   };
 
   return (
@@ -206,6 +238,36 @@ const CompanyScreen: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Editable Table Section */}
+        <div className="grid grid-cols-4 gap-8">
+          <div className="col-span-4">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  {Object.keys(tableData).map((key) => (
+                    <th key={key} className="py-2 px-4 border-b border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase">
+                      {key.replace('_', ' ')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {Object.keys(tableData).map((key) => (
+                    <td key={key} className="py-2 px-4 border-b border-gray-300">
+                      <input
+                        type="text"
+                        value={tableData[key as keyof ApiResponsePrefill]}
+                        onChange={(e) => handleTableChange(e, key as keyof ApiResponsePrefill)}
+                        className="w-full py-1 px-2 border border-gray-300 rounded"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
