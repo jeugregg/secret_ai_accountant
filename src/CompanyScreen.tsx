@@ -242,18 +242,20 @@ const CompanyScreen: React.FC = () => {
   const sealOnBC = async () => {
     if (!tableData) return;
     setIsSealing(true);
+    setCurrentOperation('Evaluating');
+  
     try {
       // Fetch the credibility score directly
       const credibilityScore = await fetchCredibilityScore(ocrResults, tableData);
-
+  
       if (credibilityScore === null) {
         console.error('Failed to fetch credibility score');
         return;
       }
-
+  
       // hash the line data with : invoice_number, date, client_name, description, total_amount, tax_amount, currency
       const line_hash = hashLinedata(tableData, fingerprint);
-
+  
       const invoice = {
         invoice_number: tableData.invoice_number,
         date: tableData.date,
@@ -268,21 +270,22 @@ const CompanyScreen: React.FC = () => {
         credibility: credibilityScore.toString(),
         audit_state: '',
       };
-
+  
+      setCurrentOperation('Broadcasting');
       const tx = await add_invoice(secretjs, invoice);
       console.log('Seal Transaction :', tx);
       console.log('Invoice sealed on blockchain:', invoice);
-
+  
       try {
         let result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
         console.log('Fetched invoices:', result);
-
+  
         // Update the tx_hash of the result with tx.transactionHash
         result = result.map((invoice) => ({
           ...invoice,
           tx_hash: tx.transactionHash,
         }));
-
+  
         // Update the Ledger Table with result
         setCredibilityScore(credibilityScore);
         setLedgerData(result);
@@ -293,8 +296,10 @@ const CompanyScreen: React.FC = () => {
       console.error('Error sealing invoice on blockchain:', error);
     } finally {
       setIsSealing(false);
+      setCurrentOperation('');
     }
-  }
+  };
+  
 
   const fetchInvoices = async () => {
     try {
@@ -518,7 +523,15 @@ const CompanyScreen: React.FC = () => {
 
               {/* Rolling Progress Indicators */}
               <div className="flex flex-wrap space-x-2 mt-2">
-                {isSealing && <RotateCcw className="animate-spin h-7 w-7 text-blue-500" />}
+                {isSealing && (
+                  <>
+                    <RotateCcw className="animate-spin h-7 w-7 text-blue-500" />
+                    <span className="ml-2 text-gray-600">
+                      {currentOperation === 'Evaluating' && 'Credibility by Secret AI...'}
+                      {currentOperation === 'Broadcasting' && 'Broadcasting tx...'}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap items-center ml-auto">
