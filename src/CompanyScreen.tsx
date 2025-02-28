@@ -2,16 +2,39 @@ import React, { useState, useRef, useEffect } from 'react';
 import ocrService from './OCRService';
 import { createFingerprint } from './CreateFingerprint'; 
 import { config } from './config'
+import CryptoJS from 'crypto-js';
 // Import assets
 import logo from './assets/Company_11.svg';
 import avatar from './assets/Company_avatar.svg';
 import fingerprintScanner from './assets/Fingerprint_scaner-1.svg';
 import fingerprintScanner2 from './assets/Fingerprint_scaner-2.svg';
+import {Wallet as WalletIcon} from 'lucide-react';
 import {
-  Wallet, FileUp, FileSearch, FileText, Edit, CheckCircle, XCircle,
-  FileSignature, Share2, RotateCcw, Copy, ChevronDown, Bell, Download, UploadCloud, Trash
+  FileUp, FileSearch, FileText,
+  FileSignature, Share2, RotateCcw, Copy, ChevronDown, Bell,
 } from 'lucide-react';
+import { Wallet, SecretNetworkClient } from "secretjs";
+import { add_invoice, get_all_invoices, update_auditor } from './contract'
+const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
+const MNEMONIC_AUDITOR = import.meta.env.VITE_APP_AUDITOR_MNEMONIC
 
+const wallet = new Wallet(MNEMONIC_ONWER)
+const myAddress = wallet.address;
+const secretjs = new SecretNetworkClient({
+  url: config.urlLcd,
+  chainId: config.chainId,
+  wallet: wallet,
+  walletAddress: myAddress,
+});
+
+const wallet_auditor = new Wallet(MNEMONIC_AUDITOR)
+const myAddress_auditor = wallet_auditor.address;
+const secretjs_auditor = new SecretNetworkClient({
+  url: config.urlLcd,
+  chainId: config.chainId,
+  wallet: wallet_auditor,
+  walletAddress: myAddress_auditor,
+});
 // Interface pour l'API
 interface ApiResponsePrefill {
   invoice_number: string;
@@ -36,6 +59,13 @@ interface ApiResponse {
   credibility: string
   audit_state: string
 }
+
+// Function to hash line data
+const hashLinedata = (tableData: ApiResponsePrefill, fingerprint: string): string => {
+  const dataString = `${tableData.invoice_number}${tableData.date}${tableData.client_name}${tableData.description}${tableData.total_amount}${tableData.tax_amount}${tableData.currency}${fingerprint}`;
+  return CryptoJS.SHA256(dataString).toString(CryptoJS.enc.Hex);
+};
+
 
 const CompanyScreen: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -153,6 +183,40 @@ const CompanyScreen: React.FC = () => {
     }
   };
 
+  const sealOnBC = async () => {
+    if (!tableData) return
+    try {
+
+      // hash the line data with : invoice_number, date, client_name, description, total_amount, tax_amount, currency
+      const line_hash = hashLinedata(tableData, fingerprint)
+      
+
+      const invoice = {
+        invoice_number: tableData.invoice_number,
+        date: tableData.date,
+        client_name: tableData.client_name,
+        description: tableData.description,
+        total_amount: tableData.total_amount.toString(),
+        tax_amount: tableData.tax_amount.toString(),
+        currency: tableData.currency,
+        doc_hash: fingerprint,
+        line_hash: line_hash,
+        auditors: '',
+        credibility: credibilityScore?.toString() || '',
+        audit_state: '',
+      }
+
+      const tx = await add_invoice(secretjs, invoice)
+      //setTransactionHash(tx.transactionHash)
+      console.log('Seal Transaction :', tx);
+      console.log('Invoice sealed on blockchain:', invoice)
+    } catch (error) {
+      console.error('Error sealing invoice on blockchain:', error)
+    }
+  }
+
+
+
   useEffect(() => {
     if (ocrResults) {
       callApi();
@@ -182,7 +246,7 @@ const CompanyScreen: React.FC = () => {
             <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-1">3</span>
           </div>
           <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full flex items-center">
-            <Wallet className="mr-2" />
+            <WalletIcon className="mr-2" />
             Wallet
           </button>
         </div>
@@ -190,7 +254,7 @@ const CompanyScreen: React.FC = () => {
 
       {/* Upload Document Section */}
       <section className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl mb-6">
-        <h2 className="text-xl font-bold mb-4">Upload Document</h2>
+        <h2 className="text-xl font-bold mb-4">Upload Invoice</h2>
         <div className="grid grid-cols-4 gap-8">
           <div className="col-span-1 flex flex-col items-center justify-center space-y-4">
             <button
@@ -338,7 +402,10 @@ const CompanyScreen: React.FC = () => {
             {/* SEAL in BC with Progress Loaders Below */}
             <div className="flex flex-wrap flex-col items-center">
               <button
-                onClick={callCredibilityApi}
+                onClick={async () => {
+                  await callCredibilityApi();
+                  await sealOnBC();
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
                 <FileSignature className="mr-2" />
                 SEAL in BC
