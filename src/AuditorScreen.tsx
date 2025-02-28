@@ -258,13 +258,6 @@ const AuditorScreen: React.FC = () => {
             {uploadedFile && (
               <>
                 <div>
-                  <button
-                    onClick={extractText}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-                    <FileSearch className="mr-2" />
-                    View doc.
-                  </button>
-                
                   <div className="flex items-center mt-2">
                     {fingerprintMatch === true ? (
                     <CheckCircle className="h-6 w-6 text-green-500" />
