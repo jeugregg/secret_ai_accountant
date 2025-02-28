@@ -3,7 +3,7 @@ import FileUpload from './FileUpload'
 import PDFViewer from './PDFViewer'
 import ocrService from './OCRService'
 import { Wallet, SecretNetworkClient } from "secretjs";
-import { add_invoice } from './contract'
+import { add_invoice, get_all_invoices } from './contract'
 import { config } from './config'
 
 const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
@@ -21,10 +21,15 @@ interface ApiResponse {
   invoice_number: string
   date: string
   client_name: string
-  type: string
+  description: string
   total_amount: number
   tax_amount: number
   currency: string
+  doc_hash: string
+  line_hash: string
+  auditors: string
+  credibility: string
+  audit_state: string
 }
 
 const App: React.FC = () => {
@@ -33,6 +38,8 @@ const App: React.FC = () => {
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null)
   const [credibilityScore, setCredibilityScore] = useState<number | null>(null)
   const [balance, setBalance] = useState<string | null>(null)
+  const [invoices, setInvoices] = useState<ApiResponse[]>([])
+  const [transactionHash, setTransactionHash] = useState<string | null>(null)
 
   const handleFileChange = (file: File) => {
     setUploadedFile(file)
@@ -142,7 +149,7 @@ const App: React.FC = () => {
         invoice_number: apiResponse.invoice_number,
         date: apiResponse.date,
         client_name: apiResponse.client_name,
-        description: apiResponse.type,
+        description: apiResponse.description,
         total_amount: apiResponse.total_amount.toString(),
         tax_amount: apiResponse.tax_amount.toString(),
         currency: apiResponse.currency,
@@ -153,10 +160,21 @@ const App: React.FC = () => {
         audit_state: '', // Add appropriate value
       }
 
-      await add_invoice(secretjs, invoice)
+      const tx = await add_invoice(secretjs, invoice)
+      setTransactionHash(tx.transactionHash)
       console.log('Invoice sealed on blockchain:', invoice)
     } catch (error) {
       console.error('Error sealing invoice on blockchain:', error)
+    }
+  }
+
+  const fetchInvoices = async () => {
+    try {
+      const result = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress)
+      console.log('Fetched invoices:', result)
+      setInvoices(result)
+    } catch (error) {
+      console.error('Error fetching invoices:', error)
     }
   }
 
@@ -196,7 +214,7 @@ const App: React.FC = () => {
                   <th className="border border-gray-300 px-4 py-2">Invoice Number</th>
                   <th className="border border-gray-300 px-4 py-2">Date</th>
                   <th className="border border-gray-300 px-4 py-2">Client Name</th>
-                  <th className="border border-gray-300 px-4 py-2">Type</th>
+                  <th className="border border-gray-300 px-4 py-2">Description</th>
                   <th className="border border-gray-300 px-4 py-2">Total Amount</th>
                   <th className="border border-gray-300 px-4 py-2">Tax Amount</th>
                   <th className="border border-gray-300 px-4 py-2">Currency</th>
@@ -231,8 +249,8 @@ const App: React.FC = () => {
                   <td className="border border-gray-300 px-4 py-2">
                     <input
                       type="text"
-                      value={apiResponse.type}
-                      onChange={(e) => handleInputChange(e, 'type')}
+                      value={apiResponse.description}
+                      onChange={(e) => handleInputChange(e, 'description')}
                       className="w-full px-2 py-1"
                     />
                   </td>
@@ -275,7 +293,54 @@ const App: React.FC = () => {
             >
               Seal on BC
             </button>
+            {transactionHash && (
+              <p className="mt-4">Transaction Hash: {transactionHash}</p>
+            )}
+            <button
+              onClick={fetchInvoices}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mt-4"
+            >
+              Fetch Invoices
+            </button>
           </>
+        )}
+        {invoices.length > 0 && (
+          <table className="mt-4 w-full border-collapse border border-gray-300">
+            <thead>
+              <tr>
+                <th className="border border-gray-300 px-4 py-2">Invoice Number</th>
+                <th className="border border-gray-300 px-4 py-2">Date</th>
+                <th className="border border-gray-300 px-4 py-2">Client Name</th>
+                <th className="border border-gray-300 px-4 py-2">Description</th>
+                <th className="border border-gray-300 px-4 py-2">Total Amount</th>
+                <th className="border border-gray-300 px-4 py-2">Tax Amount</th>
+                <th className="border border-gray-300 px-4 py-2">Currency</th>
+                <th className="border border-gray-300 px-4 py-2">Credibility</th>
+                <th className="border border-gray-300 px-4 py-2">Doc hash</th>
+                <th className="border border-gray-300 px-4 py-2">Line Hash</th>
+                <th className="border border-gray-300 px-4 py-2">Auditors</th>
+                <th className="border border-gray-300 px-4 py-2">Audit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((invoice, index) => (
+                <tr key={index}>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.invoice_number}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.date}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.client_name}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.description}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.total_amount}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.tax_amount}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.currency}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.credibility}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.doc_hash}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.line_hash}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.auditors}</td>
+                  <td className="border border-gray-300 px-4 py-2">{invoice.audit_state}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
         {credibilityScore !== null && (
           <table className="mt-4 w-full border-collapse border border-gray-300">

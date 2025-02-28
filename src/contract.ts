@@ -30,6 +30,7 @@ export const add_invoice = async (secretjs: SecretNetworkClient, invoice: Invoic
       gasLimit: 200_000,
     });
     console.log("Transaction broadcasted:", tx);
+    return tx;
   } catch (error) {
     console.error("Error broadcasting transaction:", error);
   }
@@ -39,7 +40,6 @@ export const get_all_invoices = async (secretjs: SecretNetworkClient, wallet: an
   const myAddress = wallet.address;
 
   const { signature } = await wallet.signAmino(
-    config.chainId,
     myAddress,
     {
       chain_id: config.chainId,
@@ -72,7 +72,9 @@ export const get_all_invoices = async (secretjs: SecretNetworkClient, wallet: an
       contract_address: config.contractAddress,
       code_hash: config.codeHash,
       query: {
-        get_all_invoices: {
+        get_all: {
+          wallet: myAddress,
+          index: 0,
           permit: {
             params: {
               permit_name: permitName,
@@ -85,8 +87,8 @@ export const get_all_invoices = async (secretjs: SecretNetworkClient, wallet: an
         },
       },
     });
-    console.log("Invoices query result:", invoicesQuery);
-    return invoicesQuery;
+    console.log("Invoices query result:", invoicesQuery.vect_invoice);
+    return invoicesQuery.vect_invoice;
   } catch (error) {
     console.error("Error querying invoices:", error);
   }
