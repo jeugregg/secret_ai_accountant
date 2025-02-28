@@ -101,6 +101,7 @@ const CompanyScreen: React.FC = () => {
     currency: '',
   });
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
+  const [auditorAddress, setAuditorAddress] = useState(myAddress_auditor);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -458,12 +459,6 @@ const CompanyScreen: React.FC = () => {
                 {true && <RotateCcw className="animate-spin h-7 w-7 text-blue-500" />}
               </div>
             </div>
-
-            <button className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <Share2 className="mr-2" />
-              Share with Auditor
-            </button>
-
             <div className="flex flex-wrap items-center ml-auto">
               {/* AI LLM Icon & Dynamic Credibility Score */}
               <img src="/src/assets/Ai_LLM.svg" alt="AI LLM" className="h-16 w-auto ml-20" />
@@ -475,7 +470,6 @@ const CompanyScreen: React.FC = () => {
         </div>
       </section>
 
-      {/* Ledger Table avec Scroll Horizontal */}
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
         <h2 className="text-xl font-bold mb-6">Automatic Secured Ledger</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
@@ -501,6 +495,19 @@ const CompanyScreen: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="flex justify-end mt-4 space-x-4">
+          <input
+            type="text"
+            placeholder="Enter Auditor Address"
+            value={auditorAddress}
+            className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            onChange={(e) => setAuditorAddress(e.target.value)}
+          />
+          <button className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+            <Share2 className="mr-2" />
+            Share with Auditor
+          </button>
         </div>
       </section>
     </div>
