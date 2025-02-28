@@ -19,7 +19,7 @@ const secretjs = new SecretNetworkClient({
 });
 
 const wallet_auditor = new Wallet(MNEMONIC_AUDITOR)
-const myAddress_auditor = wallet.address;
+const myAddress_auditor = wallet_auditor.address;
 const secretjs_auditor = new SecretNetworkClient({
   url: config.urlLcd,
   chainId: config.chainId,
@@ -53,7 +53,7 @@ const App: React.FC = () => {
   const [invoices, setInvoices] = useState<ApiResponse[]>([])
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
   const [auditorTransactionHash, setAuditorTransactionHash] = useState<string | null>(null)
-  const [newAuditorAddress, setNewAuditorAddress] = useState<string>('')
+  const [newAuditorAddress, setNewAuditorAddress] = useState<string>(myAddress_auditor)
 
   const handleFileChange = (file: File) => {
     setUploadedFile(file)
@@ -189,6 +189,16 @@ const App: React.FC = () => {
       setInvoices(result)
     } catch (error) {
       console.error('Error fetching invoices:', error)
+    }
+  }
+
+  const fetchInvoicesByAuditor = async () => {
+    try {
+      const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress)
+      console.log('Fetched invoices by auditor:', result)
+      setInvoices(result)
+    } catch (error) {
+      console.error('Error fetching invoices by auditor:', error)
     }
   }
 
@@ -328,6 +338,12 @@ const App: React.FC = () => {
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mt-4"
             >
               Fetch Invoices
+            </button>
+            <button
+              onClick={fetchInvoicesByAuditor}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mt-4"
+            >
+              Fetch Invoices by Auditor
             </button>
             <input
               type="text"

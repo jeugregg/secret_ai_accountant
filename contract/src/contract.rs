@@ -236,14 +236,18 @@ fn get_all(
 
     let state = config_read(deps.storage).load()?;
 
-    if wallet != state.owner {
-        return Err(StdError::generic_err("Only the owner can add Invoice"));
-    }
-    if viewer != state.owner {
-        return Err(StdError::generic_err("Only the owner can add Invoice"));
-    }
+
     let index_conf = b"0"; // Convert the integer to a byte slice
     let invoice = config_invoice_read(deps.storage, index_conf).load()?;
+
+    let invoice_auditor = invoice.auditors.clone();
+    
+    if wallet != state.owner {
+        if viewer != invoice_auditor {
+            return Err(StdError::generic_err("Only the Owner or Auditor can add Invoice"));
+        }
+    }
+
     Ok(InvoiceListResponse {
         vect_invoice: vec![invoice]
     })
