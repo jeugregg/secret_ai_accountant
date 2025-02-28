@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ocrService from './OCRService';
+import { createFingerprint } from './CreateFingerprint'; 
 import { config } from './config'
 // Import assets
 import Auditorlogo from './assets/Auditor_logo 1.svg';
@@ -13,7 +14,9 @@ import {
 } from 'lucide-react';
 import { Wallet, SecretNetworkClient } from "secretjs";
 import { add_invoice, get_all_invoices, update_auditor } from './contract'
-
+const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
+const wallet = new Wallet(MNEMONIC_ONWER)
+const myAddress = wallet.address;
 const MNEMONIC_AUDITOR = import.meta.env.VITE_APP_AUDITOR_MNEMONIC
 const wallet_auditor = new Wallet(MNEMONIC_AUDITOR)
 const myAddress_auditor = wallet_auditor.address;
@@ -65,6 +68,7 @@ const AuditorScreen: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
   const [credibilityScore, setCredibilityScore] = useState<number>(0);
+  const [fingerprintMatch, setFingerprintMatch] = useState<boolean | null>(null);
 
   const fetchInvoicesByAuditor = async () => {
     try {
@@ -88,13 +92,21 @@ const AuditorScreen: React.FC = () => {
   };
 
   // Gère l'upload du fichier
-  const handleFileChange = (file: File) => {
+  const handleFileChange = async (file: File) => {
     setUploadedFile(file);
     setDocumentName(file.name);
     setIsUploading(true);
     setTimeout(() => {
       setIsUploading(false);
     }, 2000);
+    // Create fingerprint after file upload
+    try {
+      const fingerprint = await createFingerprint(file);
+      setFingerprint(fingerprint);
+      // Extract text after creating fingerprint
+    } catch (error) {
+      console.error('Error creating fingerprint or extracting text:', error);
+    }
   };
 
   // Extraction du texte du PDF via OCR
@@ -107,6 +119,17 @@ const AuditorScreen: React.FC = () => {
       console.error('Error extracting text:', error);
     }
   };
+
+  const compareFingerprints = () => {
+    if (!fingerprint || ledgerData.length === 0) return;
+    const ledgerFingerprint = ledgerData[0].doc_hash; // Assuming the first entry for comparison
+    setFingerprintMatch(fingerprint === ledgerFingerprint);
+    console.log('Fingerprint Match:', fingerprint === ledgerFingerprint);
+  };
+
+  useEffect(() => {
+    compareFingerprints();
+  }, [fingerprint, ledgerData]);
 
   const [selectedCompany, setSelectedCompany] = useState<string>('');
 
@@ -165,7 +188,7 @@ const AuditorScreen: React.FC = () => {
                     className="h-3 w-3 text-blue-600"
                   />
                 </td>
-                <td className="px-4 py-2">0x1234...abcd</td>
+                <td className="px-4 py-2">{myAddress}</td>
                 <td className="px-4 py-2">Luxury Real Estate</td>
                 <td className="px-4 py-2">
                   <img src="src/assets/Company_11.svg" alt="Luxury Real Estate" className="h-16 w-auto mx-auto" />
@@ -186,7 +209,7 @@ const AuditorScreen: React.FC = () => {
                     className="h-3 w-3 text-blue-600"
                   />
                 </td>
-                <td className="px-4 py-2">0x5678...efgh</td>
+                <td className="px-4 py-2"></td>
                 <td className="px-4 py-2">AK</td>
                 <td className="px-4 py-2">
                   <img src="src//assets/Company_2 1@2x.png" alt="AK" className="h-16 w-auto mx-auto" />
@@ -243,13 +266,13 @@ const AuditorScreen: React.FC = () => {
                   </button>
                 
                   <div className="flex items-center mt-2">
-                    {fingerprint === 'expectedFingerprintHash' ? (
+                    {fingerprintMatch === true ? (
                     <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : (
+                    ) : fingerprintMatch === false ? (
                     <XCircle className="h-6 w-6 text-red-500" />
-                    )}
+                    ) : null}
                     <span className="ml-0 text-gray-600 text-xs">
-                    {fingerprint === 'expectedFingerprintHash' ? 'Fingerprint OK' : 'Fingerprint KO'}
+                    {fingerprintMatch === true ? 'Fingerprint OK' : fingerprintMatch === false ? 'Fingerprint KO' : ''}
                     </span>
                   </div>
                   <div className="flex items-center mt-2">
