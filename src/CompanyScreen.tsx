@@ -335,19 +335,6 @@ const CompanyScreen: React.FC = () => {
         <h2 className="text-xl font-bold mb-4">Automatic Secured Ledger</h2>
         <div className="flex flex-wrap items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <Edit className="mr-2" />
-              Edit
-            </button>
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <CheckCircle className="mr-2" />
-              Approve
-            </button>
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <XCircle className="mr-2" />
-              Delete line
-            </button>
-
             {/* SEAL in BC with Progress Loaders Below */}
             <div className="flex flex-wrap flex-col items-center">
               <button className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
