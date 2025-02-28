@@ -107,6 +107,11 @@ const fetchCredibilityScore = async (ocrResults: string, tableData: ApiResponseP
   }
 };
 
+const openFile = (file: File) => {
+  const fileURL = URL.createObjectURL(file);
+  window.open(fileURL, '_blank');
+};
+
 const CompanyScreen: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -127,6 +132,7 @@ const CompanyScreen: React.FC = () => {
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
   const [auditorAddress, setAuditorAddress] = useState(myAddress_auditor);
   const [auditorTransactionHash, setAuditorTransactionHash] = useState('');
+  const [currentOperation, setCurrentOperation] = useState('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -145,16 +151,16 @@ const CompanyScreen: React.FC = () => {
     setUploadedFile(file);
     setDocumentName(file.name);
     setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
-    }, 2000);
+    setCurrentOperation('Fingerprint');
 
     // Create fingerprint after file upload
     try {
       const fingerprint = await createFingerprint(file);
       setFingerprint(fingerprint);
+      setCurrentOperation('OCR');
       // Extract text after creating fingerprint
       await extractText(file);
+      setCurrentOperation('Prefill');
     } catch (error) {
       console.error('Error creating fingerprint or extracting text:', error);
     }
@@ -198,9 +204,11 @@ const CompanyScreen: React.FC = () => {
 
       const result: ApiResponsePrefill = await response.json();
       setTableData(result);
+      setIsUploading(false);
       console.log('API response:', result);
     } catch (error) {
       console.error('Error calling API:', error);
+      setIsUploading(false);
     }
   }
   
@@ -366,12 +374,16 @@ const CompanyScreen: React.FC = () => {
             {isUploading && (
               <div className="flex items-center mt-2">
                 <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
-                <span className="ml-2 text-gray-600">Uploading...</span>
+                <span className="ml-2 text-gray-600">
+                  {currentOperation === 'Fingerprint' && 'Creating Fingerprint...'}
+                  {currentOperation === 'OCR' && 'Extract Text by LLama Vision...'}
+                  {currentOperation === 'Prefill' && 'Prefill by Secret AI...'}
+                </span>
               </div>
             )}
             {uploadedFile && (
               <button
-                onClick={() => extractText(uploadedFile)}
+                onClick={() => openFile(uploadedFile)}
                 className="bg-blue-500 hover:bg-blue-600 text-white ffont-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
                 <FileSearch className="mr-2" />
                 View doc.
@@ -438,7 +450,10 @@ const CompanyScreen: React.FC = () => {
                   OCR
                 </label>
                 <div className="w-1/4 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '50%' }}></div>
+                  <div
+                    className={`bg-blue-600 h-2 rounded-full ${isUploading ? 'animate-pulse' : ''}`}
+                    style={{ width: isUploading ? '100%' : '50%' }}
+                  ></div>
                 </div>
               </div>
               <div className="relative flex items-center">
