@@ -82,6 +82,30 @@ const hashLinedata = (tableData: ApiResponsePrefill, fingerprint: string): strin
   return CryptoJS.SHA256(dataString).toString(CryptoJS.enc.Hex);
 };
 
+const fetchCredibilityScore = async (ocrResults: string, tableData: ApiResponsePrefill) => {
+  try {
+    const response = await fetch(config.apiCredibilityUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        invoice: ocrResults,
+        accounting_row: tableData
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const result = await response.json();
+    return result.credibility;
+  } catch (error) {
+    console.error('Error calling credibility API:', error);
+    return null;
+  }
+};
 
 const CompanyScreen: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -209,8 +233,13 @@ const CompanyScreen: React.FC = () => {
   const sealOnBC = async () => {
     if (!tableData) return;
     try {
-      // Call the credibility API and wait for it to complete
-      await callCredibilityApi();
+      // Fetch the credibility score directly
+      const credibilityScore = await fetchCredibilityScore(ocrResults, tableData);
+
+      if (credibilityScore === null) {
+        console.error('Failed to fetch credibility score');
+        return;
+      }
 
       // hash the line data with : invoice_number, date, client_name, description, total_amount, tax_amount, currency
       const line_hash = hashLinedata(tableData, fingerprint);
@@ -226,7 +255,7 @@ const CompanyScreen: React.FC = () => {
         doc_hash: fingerprint,
         line_hash: line_hash,
         auditors: '',
-        credibility: credibilityScore?.toString() || '',
+        credibility: credibilityScore.toString(),
         audit_state: '',
       };
 
