@@ -93,3 +93,24 @@ export const get_all_invoices = async (secretjs: SecretNetworkClient, wallet: an
     console.error("Error querying invoices:", error);
   }
 };
+
+export const update_auditor = async (secretjs: SecretNetworkClient, index: number, auditor: string) => {
+  const updateAuditorMsg = new MsgExecuteContract({
+    sender: secretjs.address,
+    contract_address: config.contractAddress,
+    code_hash: config.codeHash,
+    msg: { update_auditor: {invoice_index: index, auditor: auditor} },
+        
+    sent_funds: [], // optional
+  });
+
+  try {
+    const tx = await secretjs.tx.broadcast([updateAuditorMsg], {
+      gasLimit: 200_000,
+    });
+    console.log("Transaction broadcasted:", tx);
+    return tx;
+  } catch (error) {
+    console.error("Error broadcasting transaction:", error);
+  }
+};

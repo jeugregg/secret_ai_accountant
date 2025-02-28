@@ -3,7 +3,7 @@ import FileUpload from './FileUpload'
 import PDFViewer from './PDFViewer'
 import ocrService from './OCRService'
 import { Wallet, SecretNetworkClient } from "secretjs";
-import { add_invoice, get_all_invoices } from './contract'
+import { add_invoice, get_all_invoices, update_auditor } from './contract'
 import { config } from './config'
 
 const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
@@ -42,6 +42,8 @@ interface ApiResponse {
   audit_state: string
 }
 
+
+
 const App: React.FC = () => {
   const [pdfText, setPdfText] = useState<string>('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -50,6 +52,8 @@ const App: React.FC = () => {
   const [balance, setBalance] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<ApiResponse[]>([])
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
+  const [auditorTransactionHash, setAuditorTransactionHash] = useState<string | null>(null)
+  const [newAuditorAddress, setNewAuditorAddress] = useState<string>('')
 
   const handleFileChange = (file: File) => {
     setUploadedFile(file)
@@ -188,6 +192,16 @@ const App: React.FC = () => {
     }
   }
 
+  const addAuditor = async () => {
+    try {
+      const tx = await update_auditor(secretjs, 0, newAuditorAddress)
+      setAuditorTransactionHash(tx.transactionHash)
+      console.log('Auditor added:', newAuditorAddress)
+    } catch (error) {
+      console.error('Error adding auditor:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center w-full">
       <div className="bg-white p-8 rounded-lg shadow-md w-full">
@@ -306,11 +320,27 @@ const App: React.FC = () => {
             {transactionHash && (
               <p className="mt-4">Transaction Hash: {transactionHash}</p>
             )}
+            {auditorTransactionHash && (
+              <p className="mt-4">Auditor Transaction Hash: {auditorTransactionHash}</p>
+            )}
             <button
               onClick={fetchInvoices}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mt-4"
             >
               Fetch Invoices
+            </button>
+            <input
+              type="text"
+              value={newAuditorAddress}
+              onChange={(e) => setNewAuditorAddress(e.target.value)}
+              placeholder="Enter new auditor address"
+              className="w-full px-2 py-1 mt-4"
+            />
+            <button
+              onClick={() => addAuditor()}
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 mt-4"
+            >
+              Update Auditor
             </button>
           </>
         )}
