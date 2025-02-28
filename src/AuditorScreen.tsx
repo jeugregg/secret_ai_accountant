@@ -312,7 +312,7 @@ const AuditorScreen: React.FC = () => {
 
       {/* Ledger Table avec Scroll Horizontal */}
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
-        <h2 className="text-xl font-bold mb-6">Automatic Secured Ledger</h2>
+        <h2 className="text-xl font-bold mb-6">Secured Ledger On Chain</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
           <table className="min-w-max border-collapse">
             <thead className="bg-gray-100 sticky top-0 z-10 shadow-md">

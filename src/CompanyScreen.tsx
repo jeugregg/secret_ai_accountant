@@ -134,6 +134,7 @@ const CompanyScreen: React.FC = () => {
   const [auditorTransactionHash, setAuditorTransactionHash] = useState('');
   const [currentOperation, setCurrentOperation] = useState('');
   const [isSealing, setIsSealing] = useState(false);
+  const [isAddingAuditor, setIsAddingAuditor] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -311,10 +312,11 @@ const CompanyScreen: React.FC = () => {
     }
   }
   const addAuditor = async () => {
+    setIsAddingAuditor(true);
     try {
-      const tx = await update_auditor(secretjs, 0, auditorAddress)
-      setAuditorTransactionHash(tx.transactionHash)
-      console.log('Auditor added:', auditorAddress)
+      const tx = await update_auditor(secretjs, 0, auditorAddress);
+      setAuditorTransactionHash(tx.transactionHash);
+      console.log('Auditor added:', auditorAddress);
       try {
         let result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
         console.log('Fetched invoices:', result);
@@ -323,11 +325,12 @@ const CompanyScreen: React.FC = () => {
       } catch (error) {
         console.error('Error fetching invoices:', error);
       }
-
     } catch (error) {
-      console.error('Error adding auditor:', error)
+      console.error('Error adding auditor:', error);
+    } finally {
+      setIsAddingAuditor(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (ocrResults) {
@@ -366,12 +369,26 @@ const CompanyScreen: React.FC = () => {
 
       {/* Upload Document Section */}
       <section className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl mb-6">
-        <h2 className="text-xl font-bold mb-4">Upload Invoice</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Invoice</h2>
+          {isUploading && (
+            <div className="flex items-center">
+              <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
+              <span className="ml-2 text-gray-600">
+                {currentOperation === 'Fingerprint' && 'Creating Fingerprint...'}
+                {currentOperation === 'OCR' && 'Extract Text by LLama Vision...'}
+                {currentOperation === 'Prefill' && 'Prefill by Secret AI...'}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-4 gap-8">
           <div className="col-span-1 flex flex-col items-center justify-center space-y-4">
             <button
               onClick={() => document.getElementById('file-upload')?.click()}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+              className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+              disabled={isUploading || isSealing || isAddingAuditor}
+            >
               <FileUp className="mr-2" />
               Upload doc.
             </button>
@@ -381,20 +398,12 @@ const CompanyScreen: React.FC = () => {
               className="hidden"
               onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
             />
-            {isUploading && (
-              <div className="flex items-center mt-2">
-                <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
-                <span className="ml-2 text-gray-600">
-                  {currentOperation === 'Fingerprint' && 'Creating Fingerprint...'}
-                  {currentOperation === 'OCR' && 'Extract Text by LLama Vision...'}
-                  {currentOperation === 'Prefill' && 'Prefill by Secret AI...'}
-                </span>
-              </div>
-            )}
+            
             {uploadedFile && (
               <button
                 onClick={() => openFile(uploadedFile)}
-                className="bg-blue-500 hover:bg-blue-600 text-white ffont-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+                className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+              >
                 <FileSearch className="mr-2" />
                 View doc.
               </button>
@@ -411,12 +420,9 @@ const CompanyScreen: React.FC = () => {
                   id="document"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-lg" // Increased font size
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-lg"
                   placeholder="/path/Document name"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <FileSearch className="h-5 w-5 text-gray-400" />
-                </div>
               </div>
             </div>
           </div>
@@ -516,9 +522,11 @@ const CompanyScreen: React.FC = () => {
             <div className="flex flex-wrap flex-col items-center">
               <button
                 onClick={sealOnBC}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+                className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+                disabled={isUploading || isSealing || isAddingAuditor}
+              >
                 <FileSignature className="mr-2" />
-                SEAL in BC
+                SEAL On Chain
               </button>
 
               {/* Rolling Progress Indicators */}
@@ -546,7 +554,7 @@ const CompanyScreen: React.FC = () => {
       </section>
 
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
-        <h2 className="text-xl font-bold mb-6"> Secured Ledger on-chain</h2>
+        <h2 className="text-xl font-bold mb-6"> Secured Ledger On Chain</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
           <table className="min-w-max border-collapse">
             <thead className="bg-gray-100 sticky top-0 z-10 shadow-md">
@@ -572,16 +580,25 @@ const CompanyScreen: React.FC = () => {
           </table>
         </div>
         <div className="flex justify-end mt-4 space-x-4">
+        {isAddingAuditor && (
+            <div className="flex items-center ml-2">
+              <RotateCcw className="animate-spin h-5 w-5 text-purple-500" />
+              <span className="ml-2 text-gray-600">Adding Auditor...</span>
+            </div>
+          )}
           <input
             type="text"
             placeholder="Enter Auditor Address"
             value={auditorAddress}
             className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             onChange={(e) => setAuditorAddress(e.target.value)}
+            disabled={isUploading || isSealing || isAddingAuditor}
           />
           <button 
             onClick={addAuditor}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+            className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+            disabled={isUploading || isSealing || isAddingAuditor}
+          >
             <Share2 className="mr-2" />
             Share with Auditor
           </button>
