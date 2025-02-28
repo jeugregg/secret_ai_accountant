@@ -170,7 +170,7 @@ const CompanyScreen: React.FC = () => {
           </div>
           <div className="bg-white rounded-lg shadow-md p-1 text-center">
             <div className="text-gray-900 text-xs">Global Credibility Score</div>
-            <div className="text-lg font-bold text-green-500">87%</div>
+            <div className="text-lg font-bold text-green-500">{credibilityScore}%</div>
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -337,7 +337,9 @@ const CompanyScreen: React.FC = () => {
           <div className="flex items-center space-x-2">
             {/* SEAL in BC with Progress Loaders Below */}
             <div className="flex flex-wrap flex-col items-center">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+              <button
+                onClick={callCredibilityApi}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
                 <FileSignature className="mr-2" />
                 SEAL in BC
               </button>
@@ -357,7 +359,7 @@ const CompanyScreen: React.FC = () => {
               {/* AI LLM Icon & Dynamic Credibility Score */}
               <img src="/src/assets/Ai_LLM.svg" alt="AI LLM" className="h-16 w-auto ml-20" />
               <span className="text-xl font-bold text-yellow-600 ml-2">
-                54% {/* This value should be dynamically updated */}
+              {credibilityScore}% {/* This value should be dynamically updated */}
               </span>
             </div>
           </div>
