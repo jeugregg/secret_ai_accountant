@@ -133,6 +133,7 @@ const CompanyScreen: React.FC = () => {
   const [auditorAddress, setAuditorAddress] = useState(myAddress_auditor);
   const [auditorTransactionHash, setAuditorTransactionHash] = useState('');
   const [currentOperation, setCurrentOperation] = useState('');
+  const [isSealing, setIsSealing] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -240,6 +241,7 @@ const CompanyScreen: React.FC = () => {
 
   const sealOnBC = async () => {
     if (!tableData) return;
+    setIsSealing(true);
     try {
       // Fetch the credibility score directly
       const credibilityScore = await fetchCredibilityScore(ocrResults, tableData);
@@ -282,12 +284,15 @@ const CompanyScreen: React.FC = () => {
         }));
 
         // Update the Ledger Table with result
+        setCredibilityScore(credibilityScore);
         setLedgerData(result);
       } catch (error) {
         console.error('Error fetching invoices:', error);
       }
     } catch (error) {
       console.error('Error sealing invoice on blockchain:', error);
+    } finally {
+      setIsSealing(false);
     }
   }
 
@@ -449,12 +454,6 @@ const CompanyScreen: React.FC = () => {
                 <label className="block text-gray-700 text-sm font-bold" htmlFor="ocr">
                   OCR
                 </label>
-                <div className="w-1/4 bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`bg-blue-600 h-2 rounded-full ${isUploading ? 'animate-pulse' : ''}`}
-                    style={{ width: isUploading ? '100%' : '50%' }}
-                  ></div>
-                </div>
               </div>
               <div className="relative flex items-center">
                 <textarea
@@ -519,7 +518,7 @@ const CompanyScreen: React.FC = () => {
 
               {/* Rolling Progress Indicators */}
               <div className="flex flex-wrap space-x-2 mt-2">
-                {true && <RotateCcw className="animate-spin h-7 w-7 text-blue-500" />}
+                {isSealing && <RotateCcw className="animate-spin h-7 w-7 text-blue-500" />}
               </div>
             </div>
             <div className="flex flex-wrap items-center ml-auto">
@@ -534,7 +533,7 @@ const CompanyScreen: React.FC = () => {
       </section>
 
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
-        <h2 className="text-xl font-bold mb-6">Automatic Secured Ledger</h2>
+        <h2 className="text-xl font-bold mb-6"> Secured Ledger on-chain</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
           <table className="min-w-max border-collapse">
             <thead className="bg-gray-100 sticky top-0 z-10 shadow-md">
