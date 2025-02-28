@@ -7,6 +7,7 @@ import { add_invoice, get_all_invoices } from './contract'
 import { config } from './config'
 
 const MNEMONIC_ONWER = import.meta.env.VITE_APP_ONWER_MNEMONIC
+const MNEMONIC_AUDITOR = import.meta.env.VITE_APP_AUDITOR_MNEMONIC
 
 const wallet = new Wallet(MNEMONIC_ONWER)
 const myAddress = wallet.address;
@@ -15,6 +16,15 @@ const secretjs = new SecretNetworkClient({
   chainId: config.chainId,
   wallet: wallet,
   walletAddress: myAddress,
+});
+
+const wallet_auditor = new Wallet(MNEMONIC_AUDITOR)
+const myAddress_auditor = wallet.address;
+const secretjs_auditor = new SecretNetworkClient({
+  url: config.urlLcd,
+  chainId: config.chainId,
+  wallet: wallet_auditor,
+  walletAddress: myAddress_auditor,
 });
 
 interface ApiResponse {
