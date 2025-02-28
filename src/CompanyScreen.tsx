@@ -102,6 +102,7 @@ const CompanyScreen: React.FC = () => {
   });
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
   const [auditorAddress, setAuditorAddress] = useState(myAddress_auditor);
+  const [auditorTransactionHash, setAuditorTransactionHash] = useState('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -260,6 +261,24 @@ const CompanyScreen: React.FC = () => {
       //setInvoices(result)
     } catch (error) {
       console.error('Error fetching invoices:', error)
+    }
+  }
+  const addAuditor = async () => {
+    try {
+      const tx = await update_auditor(secretjs, 0, auditorAddress)
+      setAuditorTransactionHash(tx.transactionHash)
+      console.log('Auditor added:', auditorAddress)
+      try {
+        let result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
+        console.log('Fetched invoices:', result);
+        // Update the Ledger Table with result
+        setLedgerData(result);
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+      }
+
+    } catch (error) {
+      console.error('Error adding auditor:', error)
     }
   }
 
@@ -504,7 +523,9 @@ const CompanyScreen: React.FC = () => {
             className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             onChange={(e) => setAuditorAddress(e.target.value)}
           />
-          <button className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+          <button 
+            onClick={addAuditor}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
             <Share2 className="mr-2" />
             Share with Auditor
           </button>
