@@ -11,7 +11,7 @@ import fingerprintScanner2 from './assets/Fingerprint_scaner-2.svg';
 import {Wallet as WalletIcon} from 'lucide-react';
 import {
   FileUp, FileSearch, FileText,
-  FileSignature, Share2, RotateCcw, Copy, ChevronDown, Bell,
+  FileSignature, Share2, RotateCcw, Copy, ChevronDown, Bell, Download,
 } from 'lucide-react';
 import { Wallet, SecretNetworkClient } from "secretjs";
 import { add_invoice, get_all_invoices, update_auditor } from './contract'
@@ -137,6 +137,7 @@ const CompanyScreen: React.FC = () => {
   const [isAddingAuditor, setIsAddingAuditor] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
   const [auditState, setAuditState] = useState<string>('');
+  const [isFetching, setIsFetching] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -306,12 +307,16 @@ const CompanyScreen: React.FC = () => {
   
 
   const fetchInvoices = async () => {
+    setIsFetching(true);
     try {
       const result = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress)
-      console.log('Fetched invoices:', result)
+      console.log('Fetched invoices:', result);
+      setLedgerData(result);
       //setInvoices(result)
     } catch (error) {
-      console.error('Error fetching invoices:', error)
+      console.error('Error fetching invoices:', error);
+    } finally {
+      setIsFetching(false);
     }
   }
   const addAuditor = async () => {
@@ -605,42 +610,60 @@ const CompanyScreen: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <div className="flex justify-end mt-4 space-x-4">
-          {isAddingAuditor && (
-            <div className="flex items-center ml-2">
-              <RotateCcw className="animate-spin h-5 w-5 text-purple-500" />
-              <span className="ml-2 text-gray-600">Adding Auditor...</span>
-            </div>
-          )}
-          {!isAddingAuditor && auditorTransactionHash && (
-            <div className="mt-2">
-              <a
-                href={`${config.url_tx}${auditorTransactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline flex items-center"
-              >
-                <FileText className="mr-1" />
-                Show Tx
-              </a>
-            </div>
-          )}
-          <input
-            type="text"
-            placeholder="Enter Auditor Address"
-            value={auditorAddress}
-            className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-w-[400px]"
-            onChange={(e) => setAuditorAddress(e.target.value)}
-            disabled={isUploading || isSealing || isAddingAuditor}
-          />
-          <button 
-            onClick={addAuditor}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
-            disabled={isUploading || isSealing || isAddingAuditor}
-          >
-            <Share2 className="mr-2" />
-            Share with Auditor
-          </button>
+        <div className="flex justify-between mt-4 space-x-4">
+          <div className="flex items-center">
+            <button
+              onClick={fetchInvoices}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+              disabled={isUploading || isSealing || isAddingAuditor}
+            >
+              <Download className="mr-2" />
+              Fetch Ledger
+            </button>
+            {isFetching && (
+              <div className="flex items-center ml-2">
+                <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
+                <span className="ml-2 text-gray-600">Fetching...</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            {isAddingAuditor && (
+              <div className="flex items-center ml-2">
+                <RotateCcw className="animate-spin h-5 w-5 text-purple-500" />
+                <span className="ml-2 text-gray-600">Adding Auditor...</span>
+              </div>
+            )}
+            {!isAddingAuditor && auditorTransactionHash && (
+              <div className="mt-2">
+                <a
+                  href={`${config.url_tx}${auditorTransactionHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline flex items-center"
+                >
+                  <FileText className="mr-1" />
+                  Show Tx
+                </a>
+              </div>
+            )}
+            <input
+              type="text"
+              placeholder="Enter Auditor Address"
+              value={auditorAddress}
+              className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-w-[400px]"
+              onChange={(e) => setAuditorAddress(e.target.value)}
+              disabled={isUploading || isSealing || isAddingAuditor}
+            />
+            <button 
+              onClick={addAuditor}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+              disabled={isUploading || isSealing || isAddingAuditor}
+            >
+              <Share2 className="mr-2" />
+              Share with Auditor
+            </button>
+          </div>
         </div>
       </section>
     </div>
