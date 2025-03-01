@@ -70,23 +70,27 @@ const AuditorScreen: React.FC = () => {
   const [credibilityScore, setCredibilityScore] = useState<number>(0);
   const [fingerprintMatch, setFingerprintMatch] = useState<boolean | null>(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false); // New state for broadcasting
+  const [isFetching, setIsFetching] = useState(false); // New state for fetching
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
   const fetchInvoicesByAuditor = async () => {
+    setIsFetching(true); // Set fetching state to true
     try {
-      const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress)
-      console.log('Fetched invoices by auditor:', result)
+      const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress);
+      console.log('Fetched invoices by auditor:', result);
       if (result.length > 0) {
-        setLedgerData(result)
+        setLedgerData(result);
         setCredibilityScore(parseFloat(result[0].credibility));
       }
     } catch (error) {
-      console.error('Error fetching invoices by auditor:', error)
+      console.error('Error fetching invoices by auditor:', error);
+    } finally {
+      setIsFetching(false); // Set fetching state to false
     }
-  }
+  };
 
   // Gère le scroll horizontal avec Shift + Molette
   const handleScroll = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -98,18 +102,18 @@ const AuditorScreen: React.FC = () => {
 
   // Gère l'upload du fichier
   const handleFileChange = async (file: File) => {
+    setIsUploading(true);
     setUploadedFile(file);
     setDocumentName(file.name);
-    setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
-    }, 2000);
+
     // Create fingerprint after file upload
     try {
       const fingerprint = await createFingerprint(file);
       setFingerprint(fingerprint);
+      setIsUploading(false);
       // Extract text after creating fingerprint
     } catch (error) {
+      setIsUploading(false);
       console.error('Error creating fingerprint or extracting text:', error);
     }
   };
@@ -228,6 +232,12 @@ const AuditorScreen: React.FC = () => {
               <Download className="mr-3" />
               Load Secret Ledger
             </button>
+            {isFetching && (
+              <div className="flex items-center ml-2">
+                <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
+                <span className="ml-2 text-gray-600">Fetching...</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -353,7 +363,10 @@ const AuditorScreen: React.FC = () => {
           </table>
         </div>
       </section>
-
+      {/* Footer */}
+      <footer className="bg-gray-200 text-center py-4 mt-6 w-full">
+        <p>Scrt Ai Acc : <a href="https://github.com/jeugregg/secret_ai_accountant" className="text-blue-500 hover:underline">GitHub Repository</a> - 2025 - Built by jeugregg & FredericAtlan</p>
+      </footer>
     </div>
   );
 };

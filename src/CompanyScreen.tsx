@@ -684,6 +684,10 @@ const CompanyScreen: React.FC = () => {
           </div>
         </div>
       </section>
+      {/* Footer */}
+      <footer className="bg-gray-200 text-center py-4 mt-6 w-full">
+        <p>Secret AI Accontant - <a href="https://github.com/jeugregg/secret_ai_accountant" className="text-blue-500 hover:underline">GitHub Repository</a> - 2025 - Built by jeugregg & FredericAtlan</p>
+      </footer>
     </div>
   );
 };
