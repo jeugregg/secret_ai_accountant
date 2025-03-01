@@ -230,7 +230,9 @@ const AuditorScreen: React.FC = () => {
                   <img src="src/assets/Company_11.svg" alt="Luxury Real Estate" className="h-16 w-auto mx-auto" />
                 </td>
                 <td className="px-4 py-2 text-green-600 font-bold text-lg">{credibilityScore}%</td>
-                <td className="px-4 py-2 text-orange-600 font-bold text-lg">{ledgerData.find(invoice => invoice.invoice_number === selectedCompany)?.audit_state || 'Requested'}</td>
+                <td className="px-4 py-2 text-orange-600 font-bold text-lg">
+                  {ledgerData.length > 0 && ledgerData[0].audit_state ? ledgerData[0].audit_state : 'Requested'}
+                </td>
               </tr>
             </tbody>
           </table>
