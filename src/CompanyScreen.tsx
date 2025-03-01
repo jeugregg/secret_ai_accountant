@@ -603,11 +603,24 @@ const CompanyScreen: React.FC = () => {
               <span className="ml-2 text-gray-600">Adding Auditor...</span>
             </div>
           )}
+        {!isAddingAuditor && auditorTransactionHash && (
+            <div className="mt-2">
+              <a
+                href={`${config.url_tx}${auditorTransactionHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline flex items-center"
+              >
+                <FileText className="mr-1" />
+                Show Tx
+              </a>
+            </div>
+          )}
           <input
             type="text"
             placeholder="Enter Auditor Address"
             value={auditorAddress}
-            className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="border border-gray-300 rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-w-[400px]"
             onChange={(e) => setAuditorAddress(e.target.value)}
             disabled={isUploading || isSealing || isAddingAuditor}
           />
@@ -619,6 +632,7 @@ const CompanyScreen: React.FC = () => {
             <Share2 className="mr-2" />
             Share with Auditor
           </button>
+          
         </div>
       </section>
     </div>
