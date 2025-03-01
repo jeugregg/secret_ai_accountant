@@ -69,7 +69,10 @@ const AuditorScreen: React.FC = () => {
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
   const [credibilityScore, setCredibilityScore] = useState<number>(0);
   const [fingerprintMatch, setFingerprintMatch] = useState<boolean | null>(null);
-
+  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
   const fetchInvoicesByAuditor = async () => {
     try {
       const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress)
@@ -141,13 +144,12 @@ const AuditorScreen: React.FC = () => {
     if (ledgerData.length === 0) return;
   
     const updatedLedgerData = ledgerData.map((invoice) => {
-      
       return { ...invoice, audit_state: action };
       
-
     });
   
     setLedgerData(updatedLedgerData);
+    localStorage.setItem('auditState', action); // Store the audit state in localStorage
   };
 
   return (
@@ -262,9 +264,12 @@ const AuditorScreen: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center mt-2">
-                      <Copy className="h-6 w-6 text-gray-500 cursor-pointer" />
+                      <Copy 
+                        className="h-6 w-6 text-gray-500 cursor-pointer" 
+                        onClick={() => copyToClipboard(fingerprint)} 
+                      />
                       <span className="ml-2 text-gray-600 text-xs">
-                      Copy Fingerprint
+                        Copy Fingerprint
                       </span>
                     </div>
                   </div>

@@ -136,6 +136,7 @@ const CompanyScreen: React.FC = () => {
   const [isSealing, setIsSealing] = useState(false);
   const [isAddingAuditor, setIsAddingAuditor] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
+  const [auditState, setAuditState] = useState<string>('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -339,6 +340,14 @@ const CompanyScreen: React.FC = () => {
       callApi();
     }
   }, [ocrResults]);
+
+  useEffect(() => {
+    // Fetch the audit state from localStorage or any other storage mechanism
+    const storedAuditState = localStorage.getItem('auditState');
+    if (storedAuditState) {
+      setAuditState(storedAuditState);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">

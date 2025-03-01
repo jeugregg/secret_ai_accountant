@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-do
 import CompanyScreen from './CompanyScreen'
 import AuditorScreen from './AuditorScreen'
 import logo from './assets/Secret-Ai-Acc_logo.svg'
-
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
 const App: React.FC = () => {
   return (
     <Router>
