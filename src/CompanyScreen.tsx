@@ -297,6 +297,10 @@ const CompanyScreen: React.FC = () => {
       } catch (error) {
         console.error('Error fetching invoices:', error);
       }
+  
+      // Store an empty string into auditState in localStorage
+      localStorage.setItem('auditState', '');
+      setAuditState('');
     } catch (error) {
       console.error('Error sealing invoice on blockchain:', error);
     } finally {
@@ -309,16 +313,30 @@ const CompanyScreen: React.FC = () => {
   const fetchInvoices = async () => {
     setIsFetching(true);
     try {
-      const result = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress)
+      let result = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
       console.log('Fetched invoices:', result);
+  
+      // Update audit_state if auditState length > 0
+      if (auditState.length > 0) {
+        result = result.map((invoice) => ({
+          ...invoice,
+          audit_state: auditState,
+        }));
+      }
+  
+      // Update credibilityScore if it exists
+      if (result.length > 0 && result[0].credibility) {
+        setCredibilityScore(parseFloat(result[0].credibility));
+      }
+  
       setLedgerData(result);
-      //setInvoices(result)
     } catch (error) {
       console.error('Error fetching invoices:', error);
     } finally {
       setIsFetching(false);
     }
-  }
+  };
+  
   const addAuditor = async () => {
     setIsAddingAuditor(true);
     try {
