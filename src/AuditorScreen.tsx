@@ -69,10 +69,12 @@ const AuditorScreen: React.FC = () => {
   const [ledgerData, setLedgerData] = useState<BcResponse[]>([]);
   const [credibilityScore, setCredibilityScore] = useState<number>(0);
   const [fingerprintMatch, setFingerprintMatch] = useState<boolean | null>(null);
-  
+  const [isBroadcasting, setIsBroadcasting] = useState(false); // New state for broadcasting
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
+
   const fetchInvoicesByAuditor = async () => {
     try {
       const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress)
@@ -142,14 +144,19 @@ const AuditorScreen: React.FC = () => {
 
   const handleAuditAction = (action: string) => {
     if (ledgerData.length === 0) return;
-  
-    const updatedLedgerData = ledgerData.map((invoice) => {
-      return { ...invoice, audit_state: action };
-      
-    });
-  
-    setLedgerData(updatedLedgerData);
-    localStorage.setItem('auditState', action); // Store the audit state in localStorage
+
+    setIsBroadcasting(true); // Set broadcasting state to true
+
+    // Simulate broadcasting time of 3 seconds
+    setTimeout(() => {
+      const updatedLedgerData = ledgerData.map((invoice) => {
+        return { ...invoice, audit_state: action };
+      });
+
+      setLedgerData(updatedLedgerData);
+      localStorage.setItem('auditState', action); // Store the audit state in localStorage
+      setIsBroadcasting(false); // Set broadcasting state to false
+    }, 3000);
   };
 
   return (
@@ -309,6 +316,14 @@ const AuditorScreen: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Show broadcasting message */}
+      {isBroadcasting && (
+        <div className="flex items-center mt-2">
+          <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
+          <span className="ml-2 text-gray-600">Broadcasting...</span>
+        </div>
+      )}
 
       {/* Ledger Table avec Scroll Horizontal */}
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
