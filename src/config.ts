@@ -7,4 +7,5 @@ export const config = {
   codeHash: "48b650d818cb63f9838db745a5b6d4fa5321533c0e79c315ac1f26ef4454c7c7",
   urlLcd: "https://pulsar.lcd.secretnodes.com",
   chainId: "pulsar-3",
+  url_tx: "https://testnet.ping.pub/secret/tx/",
 };

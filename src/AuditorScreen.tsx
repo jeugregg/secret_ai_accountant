@@ -74,8 +74,8 @@ const AuditorScreen: React.FC = () => {
     try {
       const result = await get_all_invoices(secretjs_auditor, wallet_auditor, 'permitName', config.contractAddress)
       console.log('Fetched invoices by auditor:', result)
-      setLedgerData(result)
       if (result.length > 0) {
+        setLedgerData(result)
         setCredibilityScore(parseFloat(result[0].credibility));
       }
     } catch (error) {
@@ -197,26 +197,6 @@ const AuditorScreen: React.FC = () => {
                 <td className="px-4 py-2 text-orange-600 font-bold text-lg">Requested</td>
               </tr>
 
-              {/* JYA Smith */}
-              <tr className="text-center">
-                <td className="px-4 py-2">
-                  <input
-                    type="radio"
-                    name="company"
-                    value="jya"
-                    checked={selectedCompany === "jya"}
-                    onChange={() => setSelectedCompany("jya")}
-                    className="h-3 w-3 text-blue-600"
-                  />
-                </td>
-                <td className="px-4 py-2"></td>
-                <td className="px-4 py-2">AK</td>
-                <td className="px-4 py-2">
-                  <img src="src//assets/Company_2 1@2x.png" alt="AK" className="h-16 w-auto mx-auto" />
-                </td>
-                <td className="px-4 py-2 text-green-600 font-bold text-lg">{credibilityScore}%</td>
-                <td className="px-4 py-2 text-green-600 font-bold text-lg">Accepted </td>
-              </tr>
             </tbody>
           </table>
           <div className="flex justify-center mp-3">
@@ -277,10 +257,7 @@ const AuditorScreen: React.FC = () => {
                 </div>
               </>
             )}
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <Share2 className="mr-2" />
-              View BC Tx
-            </button>
+            
             <button className="bg-orange-400 hover:bg-orange-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
               <Edit className="mr-2" />
               Req correction

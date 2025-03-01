@@ -135,6 +135,7 @@ const CompanyScreen: React.FC = () => {
   const [currentOperation, setCurrentOperation] = useState('');
   const [isSealing, setIsSealing] = useState(false);
   const [isAddingAuditor, setIsAddingAuditor] = useState(false);
+  const [transactionHash, setTransactionHash] = useState('');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -276,6 +277,7 @@ const CompanyScreen: React.FC = () => {
       const tx = await add_invoice(secretjs, invoice);
       console.log('Seal Transaction :', tx);
       console.log('Invoice sealed on blockchain:', invoice);
+      setTransactionHash(tx.transactionHash);
   
       try {
         let result: BcResponse[] = await get_all_invoices(secretjs, wallet, 'permitName', config.contractAddress);
@@ -370,7 +372,7 @@ const CompanyScreen: React.FC = () => {
       {/* Upload Document Section */}
       <section className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Invoice</h2>
+          <h2 className="text-xl font-bold">Invoice
           {isUploading && (
             <div className="flex items-center">
               <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
@@ -381,6 +383,8 @@ const CompanyScreen: React.FC = () => {
               </span>
             </div>
           )}
+          </h2>
+          
         </div>
         <div className="grid grid-cols-4 gap-8">
           <div className="col-span-1 flex flex-col items-center justify-center space-y-4">
@@ -541,6 +545,19 @@ const CompanyScreen: React.FC = () => {
                   </>
                 )}
               </div>
+              {transactionHash && (
+                <div className="mt-2">
+                  <a
+                    href={`${config.url_tx}${transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline flex items-center"
+                  >
+                    <FileText className="mr-1" />
+                    Show Tx
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap items-center ml-auto">
               {/* AI LLM Icon & Dynamic Credibility Score */}
