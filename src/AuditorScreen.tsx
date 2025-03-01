@@ -61,6 +61,7 @@ interface BcResponse {
 
 const AuditorScreen: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [documentName, setDocumentName] = useState('');
   const [fingerprint, setFingerprint] = useState('');
@@ -162,6 +163,15 @@ const AuditorScreen: React.FC = () => {
       setIsBroadcasting(false); // Set broadcasting state to false
     }, 3000);
   };
+
+  useEffect(() => {
+    if (tableRef.current) {
+      const auditStateColumn = tableRef.current.querySelector('th:nth-child(12)');
+      if (auditStateColumn) {
+        auditStateColumn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+      }
+    }
+  }, [ledgerData]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
@@ -339,7 +349,7 @@ const AuditorScreen: React.FC = () => {
       <section className="bg-white p-1 rounded-lg shadow-md w-full max-w-6xl">
         <h2 className="text-xl font-bold mb-6">Secured Ledger On Chain</h2>
         <div ref={scrollContainerRef} onWheel={handleScroll} className="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
-          <table className="min-w-max border-collapse">
+          <table ref={tableRef} className="min-w-max border-collapse">
             <thead className="bg-gray-100 sticky top-0 z-10 shadow-md">
               <tr>
                 {ledgerData.length > 0 && Object.keys(ledgerData[0]).map((header, index) => (
