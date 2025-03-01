@@ -137,6 +137,19 @@ const AuditorScreen: React.FC = () => {
     setSelectedCompany(company);
   };
 
+  const handleAuditAction = (action: string) => {
+    if (ledgerData.length === 0) return;
+  
+    const updatedLedgerData = ledgerData.map((invoice) => {
+      
+      return { ...invoice, audit_state: action };
+      
+
+    });
+  
+    setLedgerData(updatedLedgerData);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       {/* Barre du haut */}
@@ -194,9 +207,8 @@ const AuditorScreen: React.FC = () => {
                   <img src="src/assets/Company_11.svg" alt="Luxury Real Estate" className="h-16 w-auto mx-auto" />
                 </td>
                 <td className="px-4 py-2 text-green-600 font-bold text-lg">{credibilityScore}%</td>
-                <td className="px-4 py-2 text-orange-600 font-bold text-lg">Requested</td>
+                <td className="px-4 py-2 text-orange-600 font-bold text-lg">{ledgerData.find(invoice => invoice.invoice_number === selectedCompany)?.audit_state || 'Requested'}</td>
               </tr>
-
             </tbody>
           </table>
           <div className="flex justify-center mp-3">
@@ -216,73 +228,79 @@ const AuditorScreen: React.FC = () => {
         <h2 className="text-xl font-bold mb-4">Automatic Secured Ledger</h2>
         
         <div className="flex flex-wrap items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => document.getElementById('file-upload')?.click()}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <FileUp className="mr-2" />
-              Upload doc.
-            </button>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
-            />
-            {isUploading && (
-              <div className="flex items-center mt-2">
-                <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
-                <span className="ml-2 text-gray-600">Uploading...</span>
-              </div>
-            )}
-            {uploadedFile && (
-              <>
-                <div>
-                  <div className="flex items-center mt-2">
-                    {fingerprintMatch === true ? (
-                    <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : fingerprintMatch === false ? (
-                    <XCircle className="h-6 w-6 text-red-500" />
-                    ) : null}
-                    <span className="ml-0 text-gray-600 text-xs">
-                    {fingerprintMatch === true ? 'Fingerprint OK' : fingerprintMatch === false ? 'Fingerprint KO' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <Copy className="h-6 w-6 text-gray-500 cursor-pointer" />
-                    <span className="ml-2 text-gray-600 text-xs">
-                    Copy Fingerprint
-                    </span>
-                  </div>
+          <div className="flex flex-col items-start space-y-2">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+                <FileUp className="mr-2" />
+                Check doc.
+              </button>
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
+              />
+              {isUploading && (
+                <div className="flex items-center mt-2">
+                  <RotateCcw className="animate-spin h-5 w-5 text-blue-500" />
+                  <span className="ml-2 text-gray-600">Uploading...</span>
                 </div>
-              </>
-            )}
-            
-            <button className="bg-orange-400 hover:bg-orange-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <Edit className="mr-2" />
-              Req correction
-            </button>
-
-            {/* SEAL in BC with Progress Loaders Below */}
-            <div className="flex flex-wrap flex-col items-center">
-              <button className="bg-green-500 hover:bg-green-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
+              )}
+              {uploadedFile && (
+                <>
+                  <div>
+                    <div className="flex items-center mt-2">
+                      {fingerprintMatch === true ? (
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                      ) : fingerprintMatch === false ? (
+                      <XCircle className="h-6 w-6 text-red-500" />
+                      ) : null}
+                      <span className="ml-0 text-gray-600 text-xs">
+                      {fingerprintMatch === true ? 'Fingerprint OK' : fingerprintMatch === false ? 'Fingerprint KO' : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <Copy className="h-6 w-6 text-gray-500 cursor-pointer" />
+                      <span className="ml-2 text-gray-600 text-xs">
+                      Copy Fingerprint
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <button 
+                className="bg-orange-400 hover:bg-orange-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+                onClick={() => handleAuditAction('req. corr.')}
+              >
+                <Edit className="mr-2" />
+                Req correction
+              </button>
+              <button 
+                className="bg-green-500 hover:bg-green-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+                onClick={() => handleAuditAction('approve')}
+              >
                 <CheckCircle className="mr-2" />
                 Approve
               </button>
+              <button 
+                className="bg-red-500 hover:bg-red-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+                onClick={() => handleAuditAction('issue')}
+              >
+                <XCircle className="mr-2" />
+                Flag Issue
+              </button>
             </div>
-
-            <button className="bg-red-500 hover:bg-red-600 text-white font-regular py-2 px-1 rounded inline-flex items-center transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95">
-              <XCircle className="mr-2" />
-              Flag Issue
-            </button>
-
-            <div className="flex flex-wrap items-center ml-auto">
-              {/* AI LLM Icon & Dynamic Credibility Score */}
-              <img src="/src/assets/Ai_LLM.svg" alt="AI LLM" className="h-16 w-auto ml-20" />
-              <span className="text-xl font-bold text-yellow-600 ml-2">
-                {credibilityScore}%
-              </span>
-            </div>
+          </div>
+          <div className="flex flex-wrap items-center ml-auto">
+            {/* AI LLM Icon & Dynamic Credibility Score */}
+            <img src="/src/assets/Ai_LLM.svg" alt="AI LLM" className="h-16 w-auto ml-20" />
+            <span className="text-xl font-bold text-yellow-600 ml-2">
+              {credibilityScore}%
+            </span>
           </div>
         </div>
       </section>

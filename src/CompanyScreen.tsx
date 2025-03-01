@@ -597,13 +597,13 @@ const CompanyScreen: React.FC = () => {
           </table>
         </div>
         <div className="flex justify-end mt-4 space-x-4">
-        {isAddingAuditor && (
+          {isAddingAuditor && (
             <div className="flex items-center ml-2">
               <RotateCcw className="animate-spin h-5 w-5 text-purple-500" />
               <span className="ml-2 text-gray-600">Adding Auditor...</span>
             </div>
           )}
-        {!isAddingAuditor && auditorTransactionHash && (
+          {!isAddingAuditor && auditorTransactionHash && (
             <div className="mt-2">
               <a
                 href={`${config.url_tx}${auditorTransactionHash}`}
@@ -632,7 +632,6 @@ const CompanyScreen: React.FC = () => {
             <Share2 className="mr-2" />
             Share with Auditor
           </button>
-          
         </div>
       </section>
     </div>
