@@ -12,6 +12,9 @@ Before you begin, ensure you have the following installed:
 * **Rust and Cargo:** You'll need Rust's build tools to work with the smart contract aspect of the project. Install it via [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
 * **cargo-generate:** For build the smart contract. Run this line : `cargo install cargo-generate --features vendored-openssl`
 
+* **together.ai free account:** need to use a free account to use LLAMA Vision OCR model (need API KEY cf env variable below)
+
+**IMPORTANT, NEED TO BE INSTALLED**
 * **proxy-secret-ai:** For Secret AI API call : install this projet on a different folder : https://github.com/jeugregg/proxy_secret_ai 
 ## Installation Steps
 
@@ -30,54 +33,55 @@ Before you begin, ensure you have the following installed:
     cd contract
     cargo check
     ```
-    If you haven't a repo use this:
-    ```bash
-    cargo generate --git https://github.com/scrtlabs/secret-template.git --name YOUR_NAME_HERE
-    ```
-    * Replace "YOUR_NAME_HERE" with your smart contract name
+
 
 - Set env : https://docs.scrt.network/secret-network-documentation/development/readme-1/setting-up-your-environment
-- Compile  an hello work contract : https://docs.scrt.network/secret-network-documentation/development/readme-1/compile-and-deploy
-    - `cargo generate --git https://github.com/SecretFoundation/secret-template.git --name my-counter-contract`
-    - go to the folder
-    - `cargo check` to update all deps
-    - build the contract binary : `make build-mainnet-reproducible` **(ATTENTION à le mettre à jour d’apres la DOC sur le site de secret)**
-        - make build dans le repertoire de cargo.toml
+
+
+- build the contract binary : 
+    ```bash
+    make build-mainnet-reproducible
+    ```
+  
 - Configure in testnet : https://docs.scrt.network/secret-network-documentation/infrastructure/secret-cli/configuration
     
-    `secretcli config set client node [https://pulsar.rpc.secretnodes.com](https://pulsar.rpc.secretnodes.com/)`
+    ```bash
+    secretcli config set client node https://pulsar.rpc.secretnodes.com
     
-    `secretcli config set client chain-id pulsar-3`
+    secretcli config set client chain-id pulsar-3
     
-    `secretcli config set client output json`
+    secretcli config set client output json
     
-    `secretcli config set client keyring-backend test`
+    secretcli config set client keyring-backend test
+    ```
     
 - Create Wallet : https://docs.scrt.network/secret-network-documentation/development/readme-1/compile-and-deploy#creating-a-wallet
     - `secretcli keys add myWallet`
     
 - Get faucet for testnet: https://faucet.pulsar.scrttestnet.com/
-- Check balance : `secretcli query bank balances secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r`
-- Store contract :  `secretcli tx compute store contract.wasm.gz --gas 5000000 --from myWallet --chain-id pulsar-3 --node [https://pulsar.rpc.secretnodes.com](https://pulsar.rpc.secretnodes.com/) --fees=70000uscrt`
+- Check balance : `secretcli query bank balances myWallet`
+- Store contract :  
+```bash
+secretcli tx compute store contract.wasm.gz --gas 5000000 --from myWallet --chain-id pulsar-3 --node https://pulsar.rpc.secretnodes.com --fees=70000uscrt
+```
    
 - Retrieve code :
     - `secretcli query compute list-code`
     - difficult to find but normally at the end of the list
-- Instanciate contract
-    - `secretcli tx compute instantiate 13495 '{"count": 1}' --from secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r --label secret_ai_accountant_test_02 --chain-id pulsar-3 --node https://pulsar.rpc.secretnodes.com --fees=70000uscrt -y`
+- Instanciate contract : example with code-id = 13495 and myWallet = secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r
+    - `secretcli tx compute instantiate 13495 '{"count": 1}' --from secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r --label secret_ai_accountant_test_xx --chain-id pulsar-3 --node https://pulsar.rpc.secretnodes.com --fees=70000uscrt -y`
 - check contract_address:
-    - `secretcli query compute list-contract-by-code 13495 --chain-id pulsar-3 --node [https://pulsar.rpc.secretnodes.com](https://pulsar.rpc.secretnodes.com/)`
-    - {"contract_infos":[{"contract_address":"secret1x5wrnj32awk35ezm42vxcet3vpjvz0qt8e3jhn","contract_info":{"code_id":"13481","creator":"secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r","label":"my-counter-test-dr","created":null,"ibc_port_id":"","admin":"","admin_proof":null}}]}
-- Query message  with the contract :
-    - `secretcli query compute query secret1sfuzh368gjmhv507kv546gy0dwhfu3q6fcfarl '{"get_count": {}}' --chain-id pulsar-3 --node [https://pulsar.rpc.secretnodes.com](https://pulsar.rpc.secretnodes.com/)`
-    - {"count":1}
-- Execute message
-    - `secretcli tx compute execute secret1sfuzh368gjmhv507kv546gy0dwhfu3q6fcfarl '{"increment": {}}' --from secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r --chain-id pulsar-3 --node [https://pulsar.rpc.secretnodes.com](https://pulsar.rpc.secretnodes.com/) --fees=70000uscrt`
-        - check
-        - `secretcli query compute query secret1sfuzh368gjmhv507kv546gy0dwhfu3q6fcfarl '{"get_count": {}}'`
+    - `secretcli query compute list-contract-by-code 13495 --chain-id pulsar-3 --node https://pulsar.rpc.secretnodes.com`
+    - resultat example : 
+    ```bash
+    {"contract_infos":[{"contract_address":"secret1x5wrnj32awk35ezm42vxcet3vpjvz0qt8e3jhn","contract_info":{"code_id":"13481","creator":"secret1hlk50xenk0rdlxzgth00ld09sp5jf2q0mlk05r","label":"my-counter-test-dr","created":null,"ibc_port_id":"","admin":"","admin_proof":null}}]}
+    ```
+- Query test message with the contract :
+    - `secretcli query compute query secret1sfuzh368gjmhv507kv546gy0dwhfu3q6fcfarl '{"get_count": {}}' --chain-id pulsar-3 --node https://pulsar.rpc.secretnodes.com`
 
-For more information on using the Secret Network blockchain and its features, refer to the official [Secret Network documentation](https://docs.secret.network/)  
+For more information on using the Secret Network blockchain and its features, refer to the official [Secret Network documentation](https://docs.secret.network/)    
 
+  
 
 3.  **Navigate to the Frontend Directory:**
 
@@ -92,21 +96,18 @@ For more information on using the Secret Network blockchain and its features, re
         npm install
         ```
 
-    *   **Using yarn:**
-
-        ```bash
-        yarn install
-        ```
-        This command reads the `package.json` file and installs all the necessary dependencies listed there.
+    * This command reads the `package.json` file and installs all the necessary dependencies listed there.
 
 5. **Set up Environment Variables:**
   
-    * Copy `.env.example` to `.env` at the root of the project (if available)
-    * Edit the `.env` file and replace placeholders with actual values.
+    * Copy `.env.local.example` to `.env.local` at the root of the project
+    * Edit the `.env.local` file and replace placeholders with actual values.
       
-    ```.env
-    VITE_APP_ONWER_MNEMONIC=your_owner_mnemonic
-    VITE_APP_AUDITOR_MNEMONIC=your_auditor_mnemonic
+    ```.env.local
+    VITE_APP_TOGETHER_API_KEY=
+    VITE_APP_SECRET_AI_API_KEY=
+    VITE_APP_ONWER_MNEMONIC=
+    VITE_APP_AUDITOR_MNEMONIC=
     ```
 
 6.  **Run the Development Server:**
@@ -117,11 +118,6 @@ For more information on using the Secret Network blockchain and its features, re
         npm run dev
         ```
 
-    *   **Using yarn:**
-
-        ```bash
-        yarn dev
-        ```
         This command starts the Vite development server, and it will usually open the application in your default web browser at `http://localhost:5173`.
 
 ## Additional Notes
@@ -134,7 +130,7 @@ For more information on using the Secret Network blockchain and its features, re
 
 ## Troubleshooting
 
-*   **Dependency Issues:** If you encounter any issues with dependencies, try deleting the `node_modules` folder and the `package-lock.json` or `yarn.lock` file, and then run `npm install` or `yarn install` again.
+*   **Dependency Issues:** If you encounter any issues with dependencies, try deleting the `node_modules` folder and the `package-lock.json` file, and then run `npm install` or `yarn install` again.
 *   **Port Conflicts:** If `http://localhost:5173` is already in use, the Vite server will automatically choose a different port. Check your terminal for the correct address.
 *   **Smart Contract Issues:** If you encounter build errors during the smart contract setup, ensure you have Rust and Cargo installed properly and check the `Cargo.toml` file for any misconfigurations.
 * **Env variable:** Verify that the env variable is correct.
