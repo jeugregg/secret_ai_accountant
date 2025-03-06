@@ -12,7 +12,7 @@ Before you begin, ensure you have the following installed:
 * **Rust and Cargo:** You'll need Rust's build tools to work with the smart contract aspect of the project. Install it via [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
 * **cargo-generate:** For build the smart contract. Run this line : `cargo install cargo-generate --features vendored-openssl`
 
-* **together.ai free account:** need to use a free account to use LLAMA Vision OCR model (need API KEY cf env variable below)
+* **[together.ai](https://www.together.ai/) free account:** need to use a free account to use LLAMA Vision OCR model (need API KEY cf env variable below)
 
 **IMPORTANT, NEED TO BE INSTALLED**
 * **proxy-secret-ai:** For Secret AI API call : install this projet on a different folder : https://github.com/jeugregg/proxy_secret_ai 
